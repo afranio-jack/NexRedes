@@ -46,9 +46,9 @@ Status das salas (cor · fundo): `operacional` `#15803d` · `#ecfdf5` — `.st-o
 
 Cor de identidade por sala: campo `color` em cada item de `ROOMS` (paleta atual: `#2563EB`, `#7C3AED`, `#F59E0B`, `#EF4444`, `#16A34A`), aplicada via `style={{ '--room-color': room.color }}` no RoomCard; CSS usa `var(--room-color, #2563eb)`.
 
-Logo — não alterar o gradiente:
+Logo — unificada em auth e dashboard, não divergir:
 
-- Ícone (Logo.jsx): `#00A8FF → #2979FF → #1565D8 → #1A3FCC`
-- Texto "Redes": `#1a3fcc → #2e8fff → #3b9dff`; "Nex": `#0a0e1a → #12141f`
+- `Logo.jsx` e `.topbar-brand` (Dashboard.jsx) seguem o mesmo padrão: `NetworkIcon` (stroke) + texto "NexRedes", tudo em azul `#2563eb`
+- Texto: Poppins 800, 20px, sem gradiente
 
 Fontes: Inter (UI) e Poppins (só o logo), via Google Fonts no `index.html`.

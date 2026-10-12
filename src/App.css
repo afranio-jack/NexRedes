@@ -47,47 +47,17 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  height: 36px;
+  color: #2563eb;
   text-decoration: none;
 }
 
-.logo-icon {
-  width: 36px;
-  height: 36px;
-  flex-shrink: 0;
-}
-
 .logo-text {
-  font-family: 'Poppins', 'Segoe UI', system-ui, sans-serif;
-  font-size: 22px;
+  font-family: 'Poppins', 'Inter', sans-serif;
+  font-size: 20px;
   font-weight: 800;
   line-height: 1;
   letter-spacing: -0.01em;
   white-space: nowrap;
-}
-
-.logo-nex {
-  color: #12141f;
-}
-
-.logo-redes {
-  color: #1e56d6;
-}
-
-@supports ((-webkit-background-clip: text) or (background-clip: text)) {
-  .logo-nex {
-    background: linear-gradient(180deg, #0a0e1a, #12141f);
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-  }
-
-  .logo-redes {
-    background: linear-gradient(90deg, #1a3fcc, #2e8fff 55%, #3b9dff);
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-  }
 }
 
 .card {
