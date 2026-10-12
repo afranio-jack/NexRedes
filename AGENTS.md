@@ -18,12 +18,15 @@ UI 100% em pt-BR — manter labels, mensagens e textos de commit em português.
 
 ## Arquitetura
 
-- Sem router: `src/App.jsx` alterna views (`login | signup | forgot | success | dashboard`) via `useState`. Não instalar react-router sem perguntar (deps: só react/react-dom).
+- Sem router: `src/App.jsx` alterna views (`login | signup | forgot | success | dashboard`) via `useState`; a página da sala é um estado interno do Dashboard (`salaAbertaId`). Não instalar react-router sem perguntar (deps: só react/react-dom).
 - Auth fake e local: `src/utils/storage.js` grava em `localStorage` (chave `nexredes_users`); username/email normalizados para minúsculas; senha comparada em texto puro (demo intencional).
-- Validações centralizadas em `src/utils/validation.js` (`EMAIL_REGEX`, `USERNAME_REGEX`: 3–20 chars, `[a-zA-Z0-9_]`).
-- Dashboard é estático: array `ROOMS` em `src/components/Dashboard.jsx`, nada é fetchado; busca/ordenação client-side com `localeCompare(..., 'pt-BR')`.
+- Salas persistem via camada de dados `src/utils/salas.js` (`listarSalas`, `criarSala`, `editarSala`, `excluirSala`), em `localStorage` (chave `nexredes_salas`), começando vazio, sem seed. Trocar por backend = trocar só essa camada.
+- Status da sala é DERIVADO das falhas (`calcularStatus`): falha ativa crítica → crítico; falha ativa baixa/atenção → atenção; senão operacional. Status nunca é salvo nem digitado.
+- Busca do dashboard filtra por nome, código, prédio e nome de equipamento; ordenação client-side com `localeCompare(..., 'pt-BR')`.
+- Componentes da sala em `src/components/sala/`: `SalaModal` (criação/edição, 6 seções em blocos), `SalaDetalhe` (página "Acessar"), `ListaPontosRede`, `ListaEquipamentos`, `ListaFalhas`, `ConfirmDialog`, `Campo` (campos com rótulo/erro), `opcoes.js` (cores, ícones, tipos, gravidades, status). Toast: `src/components/Toast.jsx`.
+- Cartão tracejado "Criar mais uma sala" é sempre o último item da grade; menu "⋮" do cartão tem Editar/Excluir (exclusão pede confirmação).
 - Ícones: SVG inline feitos à mão em `src/components/icons.jsx` — não usar biblioteca de ícones; ícones novos entram lá.
-- CSS: global em `src/App.css` (telas de auth) + `src/components/Dashboard.css` (dashboard), cada um importado pelo componente correspondente.
+- CSS: `src/App.css` (telas de auth) + `src/components/Dashboard.css` (dashboard) + `src/components/sala/*.css` + `src/components/Toast.css`, cada um importado pelo componente correspondente.
 
 ## Cores
 
