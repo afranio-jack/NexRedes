@@ -1,0 +1,80 @@
+/* Diálogo de confirmação — acima de modais (z-index 300) */
+
+.confirm-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(17, 24, 39, 0.55);
+}
+
+.confirm-card {
+  width: 100%;
+  max-width: 420px;
+  background: #fff;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 12px 32px rgba(17, 24, 39, 0.14);
+}
+
+.confirm-card h3 {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.confirm-card p {
+  margin-top: 8px;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: #6b7280;
+}
+
+.confirm-botoes {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.confirm-btn {
+  height: 40px;
+  padding: 0 16px;
+  border: none;
+  border-radius: 10px;
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.confirm-btn.cancelar {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.confirm-btn.cancelar:hover {
+  background: #e5e7eb;
+}
+
+.confirm-btn.primario {
+  background: #7c3aed;
+  color: #fff;
+}
+
+.confirm-btn.primario:hover {
+  background: #6d28d9;
+}
+
+.confirm-btn.perigo {
+  background: #dc2626;
+  color: #fff;
+}
+
+.confirm-btn.perigo:hover {
+  background: #b91c1c;
+}

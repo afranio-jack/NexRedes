@@ -8,16 +8,22 @@ import {
   ServerIcon,
   ChartIcon,
   GearIcon,
-  BuildingIcon,
-  DollarSignIcon,
-  UsersIcon,
-  UsersRoundIcon,
   PlusIcon,
   SortIcon,
   LogoutIcon,
 } from './icons'
 import RoomCard from './RoomCard'
+import Toast from './Toast'
+import SalaModal from './sala/SalaModal'
+import SalaDetalhe from './sala/SalaDetalhe'
+import ConfirmDialog from './sala/ConfirmDialog'
 import './Dashboard.css'
+import {
+  listarSalas,
+  criarSala,
+  editarSala,
+  excluirSala,
+} from '../utils/salas'
 
 const NAV_ITEMS = [
   { id: 'projetos', label: 'Projetos', Icon: HomeIcon, active: true },
@@ -27,92 +33,79 @@ const NAV_ITEMS = [
   { id: 'configuracoes', label: 'Configurações', Icon: GearIcon },
 ]
 
-const ROOMS = [
-  {
-    id: 'lei-1',
-    name: 'Lei 1',
-    color: '#2563EB',
-    Icon: BuildingIcon,
-    status: 'operacional',
-    machines: 45,
-    failures: 3,
-    lastCheck: 'Hoje, 14:32',
-  },
-  {
-    id: 'lei-2',
-    name: 'Lei 2',
-    color: '#7C3AED',
-    Icon: BuildingIcon,
-    status: 'operacional',
-    machines: 28,
-    failures: 0,
-    lastCheck: 'Ontem, 09:15',
-  },
-  {
-    id: 'sala-hardware',
-    name: 'Sala de hardware',
-    color: '#F59E0B',
-    Icon: ServerIcon,
-    status: 'atencao',
-    machines: 62,
-    failures: 7,
-    lastCheck: 'Hoje, 11:05',
-  },
-  {
-    id: 'secretaria',
-    name: 'Secretaria',
-    color: '#EF4444',
-    Icon: UsersIcon,
-    status: 'critico',
-    machines: 15,
-    failures: 12,
-    lastCheck: 'Há 3 dias',
-  },
-  {
-    id: 'financeiro',
-    name: 'Financeiro',
-    color: '#16A34A',
-    Icon: DollarSignIcon,
-    status: 'operacional',
-    machines: 45,
-    failures: 3,
-    lastCheck: 'Hoje, 14:32',
-  },
-  {
-    id: 'coordenacao',
-    name: 'Coordenação',
-    color: '#7C3AED',
-    Icon: UsersRoundIcon,
-    status: 'operacional',
-    machines: 28,
-    failures: 0,
-    lastCheck: 'Ontem, 09:15',
-  },
-]
-
 export default function Dashboard({ user, onLogout }) {
-  const [search, setSearch] = useState('')
-  const [sort, setSort] = useState('az')
-  const [menuOpen, setMenuOpen] = useState(false)
+  const [salas, setSalas] = useState(() => listarSalas())
+  const [busca, setBusca] = useState('')
+  const [ordem, setOrdem] = useState('az')
+  const [menuAberto, setMenuAberto] = useState(false)
+  const [modal, setModal] = useState(null) // null | { sala: Sala | null }
+  const [salaAbertaId, setSalaAbertaId] = useState(null)
+  const [salaParaExcluir, setSalaParaExcluir] = useState(null)
+  const [toast, setToast] = useState(null)
+  const [destaqueId, setDestaqueId] = useState(null)
 
-  const rooms = useMemo(() => {
-    const query = search.trim().toLowerCase()
-    const filtered = query
-      ? ROOMS.filter((room) => room.name.toLowerCase().includes(query))
-      : ROOMS
-    const sorted = [...filtered]
-    if (sort === 'machines') {
-      sorted.sort((a, b) => b.machines - a.machines)
+  // A página da sala é derivada do id, então ela se atualiza após editar
+  const salaAberta = salas.find((sala) => sala.id === salaAbertaId) || null
+
+  // Busca por nome, código, prédio ou equipamento + ordenação pt-BR
+  const salasVisiveis = useMemo(() => {
+    const termo = busca.trim().toLowerCase()
+    const filtradas = termo
+      ? salas.filter(
+          (sala) =>
+            sala.nome.toLowerCase().includes(termo) ||
+            (sala.codigo || '').toLowerCase().includes(termo) ||
+            (sala.predio || '').toLowerCase().includes(termo) ||
+            (sala.equipamentos || []).some((equipamento) =>
+              (equipamento.nome || '').toLowerCase().includes(termo)
+            )
+        )
+      : salas
+    const ordenadas = [...filtradas]
+    if (ordem === 'machines') {
+      ordenadas.sort(
+        (a, b) => (b.quantidadeMaquinas || 0) - (a.quantidadeMaquinas || 0)
+      )
     } else {
-      const direction = sort === 'za' ? -1 : 1
-      sorted.sort(
-        (a, b) => direction * a.name.localeCompare(b.name, 'pt-BR')
+      const direcao = ordem === 'za' ? -1 : 1
+      ordenadas.sort(
+        (a, b) => direcao * a.nome.localeCompare(b.nome, 'pt-BR')
       )
     }
-    return sorted
-  }, [search, sort])
+    return ordenadas
+  }, [salas, busca, ordem])
 
-  const query = search.trim()
+  function abrirNovaSala() {
+    setModal({ sala: null })
+  }
+
+  function abrirEdicao(sala) {
+    setModal({ sala })
+  }
+
+  function salvarSala(dados) {
+    if (modal?.sala) {
+      editarSala(modal.sala.id, dados)
+      setToast('Sala atualizada com sucesso')
+    } else {
+      const nova = criarSala(dados)
+      setToast('Sala criada com sucesso')
+      setDestaqueId(nova.id)
+      window.setTimeout(() => setDestaqueId(null), 2500)
+    }
+    setSalas(listarSalas())
+    setModal(null)
+  }
+
+  function confirmarExclusao() {
+    if (!salaParaExcluir) return
+    excluirSala(salaParaExcluir.id)
+    setSalas(listarSalas())
+    if (salaAbertaId === salaParaExcluir.id) setSalaAbertaId(null)
+    setSalaParaExcluir(null)
+  }
+
+  const termoBusca = busca.trim()
 
   return (
     <div className="dash">
@@ -127,16 +120,16 @@ export default function Dashboard({ user, onLogout }) {
           <input
             type="text"
             placeholder="Pesquisar sala, equipamento, setor..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            value={busca}
+            onChange={(e) => setBusca(e.target.value)}
             aria-label="Pesquisar sala, equipamento ou setor"
           />
         </div>
 
         <div className="topbar-actions">
-          <button type="button" className="btn-new">
+          <button type="button" className="btn-new" onClick={abrirNovaSala}>
             <PlusIcon size={16} />
-            Novo projeto
+            Nova sala
           </button>
           <button type="button" className="bell-btn" aria-label="Notificações">
             <BellIcon size={20} />
@@ -147,19 +140,19 @@ export default function Dashboard({ user, onLogout }) {
               type="button"
               className="avatar-btn"
               aria-haspopup="menu"
-              aria-expanded={menuOpen}
-              onClick={() => setMenuOpen((open) => !open)}
+              aria-expanded={menuAberto}
+              onClick={() => setMenuAberto((open) => !open)}
             >
               <span className="avatar-circle" aria-hidden="true">
                 A
               </span>
               <ChevronDownIcon size={16} />
             </button>
-            {menuOpen && (
+            {menuAberto && (
               <>
                 <div
                   className="menu-backdrop"
-                  onClick={() => setMenuOpen(false)}
+                  onClick={() => setMenuAberto(false)}
                 ></div>
                 <div className="avatar-menu" role="menu">
                   <div className="menu-user">
@@ -204,48 +197,94 @@ export default function Dashboard({ user, onLogout }) {
         </nav>
       </aside>
 
-      <main className="dash-main">
-        <div className="main-header">
-          <div>
-            <h1>Projetos</h1>
-            <p>Gerencie seus ambientes de rede e mantenha tudo organizado.</p>
+      {salaAberta ? (
+        <SalaDetalhe
+          sala={salaAberta}
+          onVoltar={() => setSalaAbertaId(null)}
+          onEditar={() => setModal({ sala: salaAberta })}
+        />
+      ) : (
+        <main className="dash-main">
+          <div className="main-header">
+            <div>
+              <h1>Projetos</h1>
+              <p>Gerencie seus ambientes de rede e mantenha tudo organizado.</p>
+            </div>
+            <div className="sort-select">
+              <SortIcon size={16} />
+              <select
+                aria-label="Ordenar projetos"
+                value={ordem}
+                onChange={(e) => setOrdem(e.target.value)}
+              >
+                <option value="az">Nome (A → Z)</option>
+                <option value="za">Nome (Z → A)</option>
+                <option value="machines">Mais máquinas</option>
+              </select>
+              <ChevronDownIcon size={16} className="sort-chevron" />
+            </div>
           </div>
-          <div className="sort-select">
-            <SortIcon size={16} />
-            <select
-              aria-label="Ordenar projetos"
-              value={sort}
-              onChange={(e) => setSort(e.target.value)}
-            >
-              <option value="az">Nome (A → Z)</option>
-              <option value="za">Nome (Z → A)</option>
-              <option value="machines">Mais máquinas</option>
-            </select>
-            <ChevronDownIcon size={16} className="sort-chevron" />
-          </div>
-        </div>
 
-        <div className="room-grid">
-          {rooms.map((room) => (
-            <RoomCard key={room.id} room={room} />
-          ))}
-          {query === '' && (
-            <button type="button" className="card-create">
+          <div className="room-grid">
+            {salasVisiveis.map((sala) => (
+              <RoomCard
+                key={sala.id}
+                sala={sala}
+                destaque={destaqueId === sala.id}
+                onAcessar={(s) => setSalaAbertaId(s.id)}
+                onEditar={abrirEdicao}
+                onExcluir={setSalaParaExcluir}
+              />
+            ))}
+
+            {/* Cartão tracejado sempre como último item */}
+            <button type="button" className="card-create" onClick={abrirNovaSala}>
               <span className="create-circle" aria-hidden="true">
                 <PlusIcon size={26} />
               </span>
-              <h3>Criar mais uma sala</h3>
-              <p>Adicione um novo ambiente para gerenciar sua rede.</p>
+              <h3>
+                {salas.length === 0
+                  ? 'Criar sua primeira sala'
+                  : 'Criar mais uma sala'}
+              </h3>
+              <p>
+                {salas.length === 0
+                  ? 'Cadastre um ambiente para começar a organizar sua rede.'
+                  : 'Adicione um novo ambiente para gerenciar sua rede.'}
+              </p>
             </button>
-          )}
-          {rooms.length === 0 && (
-            <div className="empty-state">
-              <SearchIcon size={28} />
-              <p>Nenhuma sala encontrada para “{query}”.</p>
-            </div>
-          )}
-        </div>
-      </main>
+
+            {termoBusca !== '' && salasVisiveis.length === 0 && (
+              <div className="empty-state">
+                <SearchIcon size={28} />
+                <p>Nenhuma sala encontrada para “{termoBusca}”.</p>
+              </div>
+            )}
+          </div>
+        </main>
+      )}
+
+      {modal && (
+        <SalaModal
+          sala={modal.sala}
+          salasExistentes={salas}
+          onFechar={() => setModal(null)}
+          onSalvar={salvarSala}
+        />
+      )}
+
+      {salaParaExcluir && (
+        <ConfirmDialog
+          titulo="Excluir sala"
+          texto={`Tem certeza que deseja excluir “${salaParaExcluir.nome}”? Esta ação não pode ser desfeita.`}
+          confirmarLabel="Excluir"
+          perigo
+          onConfirmar={confirmarExclusao}
+          onCancelar={() => setSalaParaExcluir(null)}
+        />
+      )}
+
+      <Toast mensagem={toast} onFechar={() => setToast(null)} />
     </div>
   )
 }

@@ -179,6 +179,15 @@ export function ArrowRightIcon({ size }) {
   )
 }
 
+export function ArrowLeftIcon({ size }) {
+  return (
+    <Svg size={size}>
+      <path d="M19 12H5" />
+      <path d="m12 19-7-7 7-7" />
+    </Svg>
+  )
+}
+
 export function PlusIcon({ size }) {
   return (
     <Svg size={size}>
@@ -215,6 +224,45 @@ export function LogoutIcon({ size }) {
       <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
       <path d="m16 17 5-5-5-5" />
       <path d="M21 12H9" />
+    </Svg>
+  )
+}
+
+export function XIcon({ size }) {
+  return (
+    <Svg size={size}>
+      <path d="M18 6 6 18" />
+      <path d="m6 6 12 12" />
+    </Svg>
+  )
+}
+
+export function TrashIcon({ size }) {
+  return (
+    <Svg size={size}>
+      <path d="M3 6h18" />
+      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
+      <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+      <path d="M10 11v6" />
+      <path d="M14 11v6" />
+    </Svg>
+  )
+}
+
+export function MapPinIcon({ size }) {
+  return (
+    <Svg size={size}>
+      <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
+      <circle cx="12" cy="10" r="3" />
+    </Svg>
+  )
+}
+
+export function PencilIcon({ size }) {
+  return (
+    <Svg size={size}>
+      <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
+      <path d="m15 5 4 4" />
     </Svg>
   )
 }
