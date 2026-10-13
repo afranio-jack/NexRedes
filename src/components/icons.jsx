@@ -266,3 +266,154 @@ export function PencilIcon({ size }) {
     </Svg>
   )
 }
+
+// --- Ícones do módulo de racks, switches e patch panels ---
+
+export function RackIcon({ size }) {
+  return (
+    <Svg size={size}>
+      <rect x="5" y="2" width="14" height="20" rx="2" />
+      <path d="M5 8h14M5 14h14M5 20h14" />
+      <path d="M8 5h.01M8 11h.01M8 17h.01" />
+    </Svg>
+  )
+}
+
+export function SwitchIcon({ size }) {
+  return (
+    <Svg size={size}>
+      <rect x="2" y="7" width="20" height="10" rx="2" />
+      <path d="M6 10.5v3M9 10.5v3M12 10.5v3" />
+      <path d="m16 10 2.5 2-2.5 2" />
+    </Svg>
+  )
+}
+
+export function PatchPanelIcon({ size }) {
+  return (
+    <Svg size={size}>
+      <rect x="2" y="6" width="20" height="12" rx="2" />
+      <path d="M6.5 10h.01M10.17 10h.01M13.83 10h.01M17.5 10h.01M6.5 14h.01M10.17 14h.01M13.83 14h.01M17.5 14h.01" />
+    </Svg>
+  )
+}
+
+export function PrinterIcon({ size }) {
+  return (
+    <Svg size={size}>
+      <path d="M6 9V3h12v6" />
+      <path d="M6 17H4a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2" />
+      <rect x="6" y="13" width="12" height="8" rx="1" />
+    </Svg>
+  )
+}
+
+export function AccessPointIcon({ size }) {
+  return (
+    <Svg size={size}>
+      <path d="M5 12.55a11 11 0 0 1 14.08 0" />
+      <path d="M1.42 9.08a16 16 0 0 1 21.16 0" />
+      <path d="M8.53 16.03a6 6 0 0 1 6.95 0" />
+      <path d="M12 20h.01" />
+    </Svg>
+  )
+}
+
+export function CameraIcon({ size }) {
+  return (
+    <Svg size={size}>
+      <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z" />
+      <circle cx="12" cy="13" r="3" />
+    </Svg>
+  )
+}
+
+export function PhoneIcon({ size }) {
+  return (
+    <Svg size={size}>
+      <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+    </Svg>
+  )
+}
+
+export function BoxIcon({ size }) {
+  return (
+    <Svg size={size}>
+      <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z" />
+      <path d="m3.3 7 8.7 5 8.7-5" />
+      <path d="M12 22V12" />
+    </Svg>
+  )
+}
+
+export function PlugIcon({ size }) {
+  return (
+    <Svg size={size}>
+      <path d="M9 2v6M15 2v6" />
+      <path d="M6 8h12v4a6 6 0 0 1-12 0V8z" />
+      <path d="M12 18v4" />
+    </Svg>
+  )
+}
+
+export function CheckCircleIcon({ size }) {
+  return (
+    <Svg size={size}>
+      <circle cx="12" cy="12" r="10" />
+      <path d="m8.5 12 2.5 2.5L15.5 9.5" />
+    </Svg>
+  )
+}
+
+export function XCircleIcon({ size }) {
+  return (
+    <Svg size={size}>
+      <circle cx="12" cy="12" r="10" />
+      <path d="m15 9-6 6M9 9l6 6" />
+    </Svg>
+  )
+}
+
+export function WrenchIcon({ size }) {
+  return (
+    <Svg size={size}>
+      <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" />
+    </Svg>
+  )
+}
+
+export function LinkArrowsIcon({ size }) {
+  return (
+    <Svg size={size}>
+      <path d="m8 3-4 4 4 4" />
+      <path d="M4 7h16" />
+      <path d="m16 21 4-4-4-4" />
+      <path d="M20 17H4" />
+    </Svg>
+  )
+}
+
+export function LockIcon({ size }) {
+  return (
+    <Svg size={size}>
+      <rect x="4" y="11" width="16" height="10" rx="2" />
+      <path d="M8 11V7a4 4 0 0 1 8 0v4" />
+    </Svg>
+  )
+}
+
+export function ZapIcon({ size }) {
+  return (
+    <Svg size={size}>
+      <path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z" />
+    </Svg>
+  )
+}
+
+export function ChevronRightIcon({ size }) {
+  return (
+    <Svg size={size}>
+      <path d="m9 18 6-6-6-6" />
+    </Svg>
+  )
+}

@@ -32,7 +32,8 @@ function normalizarItens(dados) {
   }
 }
 
-function carregar() {
+// Primitivas de persistência — também usadas pela camada de racks (utils/racks.js)
+export function carregarSalas() {
   try {
     const bruto = localStorage.getItem(STORAGE_KEY)
     const salas = bruto ? JSON.parse(bruto) : []
@@ -42,12 +43,12 @@ function carregar() {
   }
 }
 
-function salvar(salas) {
+export function salvarSalas(salas) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(salas))
 }
 
 export function listarSalas() {
-  return carregar()
+  return carregarSalas()
 }
 
 export function criarSala(dados) {
@@ -55,38 +56,42 @@ export function criarSala(dados) {
   const nova = {
     ...normalizarItens(dados),
     id: criarId(),
+    racks: [],
     criadoEm: agora,
     atualizadoEm: agora,
   }
-  const salas = carregar()
+  const salas = carregarSalas()
   salas.push(nova)
-  salvar(salas)
+  salvarSalas(salas)
   return nova
 }
 
 export function editarSala(id, dados) {
-  const salas = carregar()
+  const salas = carregarSalas()
   const indice = salas.findIndex((sala) => sala.id === id)
   if (indice === -1) return null
   const atualizada = {
     ...salas[indice],
     ...normalizarItens(dados),
+    // Racks são gerenciados apenas pela camada utils/racks.js:
+    // preservar o que já existe ao editar a sala pelo modal.
+    racks: salas[indice].racks || [],
     id,
     atualizadoEm: new Date().toISOString(),
   }
   salas[indice] = atualizada
-  salvar(salas)
+  salvarSalas(salas)
   return atualizada
 }
 
 export function excluirSala(id) {
-  const salas = carregar().filter((sala) => sala.id !== id)
-  salvar(salas)
+  const salas = carregarSalas().filter((sala) => sala.id !== id)
+  salvarSalas(salas)
 }
 
 // Sugere o próximo código sequencial disponível: SALA-01, SALA-02, ...
 export function gerarCodigoSalas() {
-  const salas = carregar()
+  const salas = carregarSalas()
   let maior = 0
   for (const sala of salas) {
     const match = /^SALA-(\d+)$/.exec((sala.codigo || '').trim().toUpperCase())

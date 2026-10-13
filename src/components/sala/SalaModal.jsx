@@ -232,7 +232,8 @@ export default function SalaModal({
   const [confirmarDescarte, setConfirmarDescarte] = useState(false)
   const modalRef = useRef(null)
 
-  // Alvos possíveis para falhas: pontos + equipamentos da própria tela + "Outro"
+  // Alvos possíveis para falhas: pontos + equipamentos da própria tela +
+  // alvos já existentes (ex.: falhas de porta vindas do módulo de racks) + "Outro"
   const alvosFalha = useMemo(() => {
     const nomesPontos = form.pontosRede
       .map((ponto) => (ponto.identificacao || '').trim())
@@ -240,8 +241,14 @@ export default function SalaModal({
     const nomesEquipamentos = form.equipamentos
       .map((equipamento) => (equipamento.nome || '').trim())
       .filter(Boolean)
-    return [...new Set([...nomesPontos, ...nomesEquipamentos]), 'Outro']
-  }, [form.pontosRede, form.equipamentos])
+    const alvosExistentes = form.falhas
+      .map((falha) => (falha.alvo || '').trim())
+      .filter(Boolean)
+    return [
+      ...new Set([...nomesPontos, ...nomesEquipamentos, ...alvosExistentes]),
+      'Outro',
+    ]
+  }, [form.pontosRede, form.equipamentos, form.falhas])
 
   // Foco no primeiro campo + trava o scroll do fundo
   useEffect(() => {

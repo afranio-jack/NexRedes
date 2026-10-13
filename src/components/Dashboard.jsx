@@ -202,6 +202,7 @@ export default function Dashboard({ user, onLogout }) {
           sala={salaAberta}
           onVoltar={() => setSalaAbertaId(null)}
           onEditar={() => setModal({ sala: salaAberta })}
+          onDadosAlterados={() => setSalas(listarSalas())}
         />
       ) : (
         <main className="dash-main">

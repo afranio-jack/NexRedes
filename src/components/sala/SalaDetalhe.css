@@ -6,6 +6,48 @@
   gap: 16px;
 }
 
+/* Abas "Visão geral" / "Racks" */
+
+.detalhe-abas {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  overflow-x: auto;
+}
+
+.detalhe-aba {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 42px;
+  padding: 0 16px;
+  border: none;
+  border-radius: 9px;
+  background: none;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  color: #6b7280;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.detalhe-aba:hover {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.detalhe-aba.ativa {
+  background: #eff6ff;
+  color: #2563eb;
+}
+
 .detalhe-voltar {
   display: inline-flex;
   align-items: center;

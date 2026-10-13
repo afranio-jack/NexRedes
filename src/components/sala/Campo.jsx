@@ -100,9 +100,12 @@ export function CampoSelect({
         {opcoes.map((opcao) => {
           const valorOpcao = typeof opcao === 'string' ? opcao : opcao.valor
           const labelOpcao = typeof opcao === 'string' ? opcao : opcao.label
+          const desabilitada =
+            typeof opcao === 'object' && opcao.desabilitada ? true : undefined
           return (
-            <option key={valorOpcao} value={valorOpcao}>
+            <option key={valorOpcao} value={valorOpcao} disabled={desabilitada}>
               {labelOpcao}
+              {desabilitada ? ' (ocupada)' : ''}
             </option>
           )
         })}
