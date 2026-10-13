@@ -6,7 +6,7 @@
 // mutações recarregam do storage por id, aplicam e salvam de uma vez (transação).
 
 import { carregarSalas, salvarSalas } from './salas'
-import { hojeISO } from './datas'
+import { hojeISO, agoraISO } from './datas'
 import { IPV4_REGEX } from './validation'
 
 function criarIdItem(prefixo) {
@@ -47,6 +47,44 @@ function texto(valor) {
 
 // ---------- Geração e normalização de portas ----------
 
+// Histórico de eventos da porta (registros feitos no app, com data e hora)
+const LIMITE_HISTORICO = 20
+
+const ROTULO_ESTADO_CAMPO = {
+  ativa: 'Ativa',
+  desativada: 'Desativada',
+  reservada: 'Reservada',
+}
+
+// Acrescenta um registro no topo do histórico da porta (mais recente primeiro)
+function registrarHistorico(porta, textoRegistro) {
+  const entrada = {
+    id: criarIdItem('hist'),
+    data: agoraISO(),
+    texto: textoRegistro,
+  }
+  porta.historico = [entrada, ...(porta.historico || [])].slice(
+    0,
+    LIMITE_HISTORICO
+  )
+}
+
+// Descrição "EQUIP / porta N (lado)" de um vínculo salvo
+function descricaoVinculoPorId(sala, vinculo) {
+  if (!vinculo) return ''
+  const equipamento = encontrarEquipamentoNaSala(sala, vinculo.equipamentoId)
+  const porta = equipamento && encontrarPorta(equipamento, vinculo.portaId)
+  if (!equipamento || !porta) return ''
+  const lado = porta.lado ? ` (${porta.lado})` : ''
+  return `${equipamento.nome} / porta ${porta.numero}${lado}`
+}
+
+function vinculosIguais(a, b) {
+  if (!a && !b) return true
+  if (!a || !b) return false
+  return a.equipamentoId === b.equipamentoId && a.portaId === b.portaId
+}
+
 function criarPortaBase(numero, extra = {}) {
   return {
     id: criarIdItem('porta'),
@@ -66,8 +104,10 @@ function criarPortaBase(numero, extra = {}) {
     vlansPermitidas: '',
     uplink: { ativo: false, destino: '' },
     ultimoTeste: 'SEM_TESTE',
+    dataUltimoTeste: null, // ISO com data e hora do último teste registrado
     falhaId: null,
     observacao: '',
+    historico: [], // registros de eventos feitos no app
     ...extra,
   }
 }
@@ -759,6 +799,24 @@ export function salvarPorta(salaId, equipamentoId, portaId, dados) {
   const porta = equipamento && encontrarPorta(equipamento, portaId)
   if (!porta) return null
 
+  // 0. Retrato dos valores atuais (para o histórico das mudanças)
+  const antes = {
+    nome: porta.nome,
+    estado: porta.estado,
+    vinculo: porta.vinculo,
+    pontoRede: { ...porta.pontoRede },
+    dispositivoConectado: { ...porta.dispositivoConectado },
+    uplink: { ...porta.uplink },
+    ultimoTeste: porta.ultimoTeste,
+    categoriaCabo: porta.categoriaCabo,
+    comprimentoM: porta.comprimentoM,
+    velocidade: porta.velocidade,
+    poe: porta.poe,
+    vlanNativa: porta.vlanNativa,
+    vlansPermitidas: porta.vlansPermitidas,
+    observacao: porta.observacao,
+  }
+
   // 1. Vínculo — antigo é desfeito dos dois lados; novo é espelhado
   const vinculoAntigo = porta.vinculo || null
   const vinculoNovo = dados.vinculo || null
@@ -846,6 +904,77 @@ export function salvarPorta(salaId, equipamentoId, portaId, dados) {
     }
   }
 
+  // 4. Histórico — registra o que mudou em relação ao retrato inicial
+  const registros = []
+  if (!vinculosIguais(antes.vinculo, porta.vinculo)) {
+    if (porta.vinculo) {
+      registros.push(`Vinculada a ${descricaoVinculoPorId(sala, porta.vinculo)}`)
+    } else {
+      registros.push(
+        `Vínculo com ${descricaoVinculoPorId(sala, antes.vinculo)} removido`
+      )
+    }
+  }
+  if (antes.pontoRede.identificacao !== porta.pontoRede.identificacao) {
+    if (porta.pontoRede.identificacao) {
+      registros.push(`Porta vinculada ao ponto ${porta.pontoRede.identificacao}`)
+    } else {
+      registros.push('Vínculo com o ponto de rede removido')
+    }
+  }
+  const tinhaDisp = Boolean(
+    antes.dispositivoConectado.tipo || texto(antes.dispositivoConectado.nome)
+  )
+  const temDisp = Boolean(
+    porta.dispositivoConectado.tipo || texto(porta.dispositivoConectado.nome)
+  )
+  if (tinhaDisp !== temDisp) {
+    if (temDisp) {
+      registros.push(
+        `Dispositivo conectado: ${
+          porta.dispositivoConectado.nome || 'dispositivo'
+        }`
+      )
+    } else {
+      registros.push('Dispositivo desconectado')
+    }
+  }
+  if (!antes.uplink.ativo && porta.uplink.ativo) {
+    registros.push(
+      `Uplink ativado${porta.uplink.destino ? ` → ${porta.uplink.destino}` : ''}`
+    )
+  } else if (antes.uplink.ativo && !porta.uplink.ativo) {
+    registros.push('Uplink desativado')
+  }
+  if (antes.estado !== porta.estado) {
+    registros.push(
+      `Estado: ${ROTULO_ESTADO_CAMPO[antes.estado] || antes.estado || 'Ativa'} → ${
+        ROTULO_ESTADO_CAMPO[porta.estado] || porta.estado
+      }`
+    )
+  }
+  if (antes.ultimoTeste !== porta.ultimoTeste) {
+    if (porta.ultimoTeste === 'SEM_TESTE') {
+      registros.push('Resultado de teste removido')
+    } else {
+      registros.push(`Teste ${porta.ultimoTeste} registrado`)
+      porta.dataUltimoTeste = agoraISO()
+    }
+  }
+  const mudouOutros =
+    antes.nome !== porta.nome ||
+    antes.categoriaCabo !== porta.categoriaCabo ||
+    antes.comprimentoM !== porta.comprimentoM ||
+    antes.velocidade !== porta.velocidade ||
+    antes.poe !== porta.poe ||
+    antes.vlanNativa !== porta.vlanNativa ||
+    antes.vlansPermitidas !== porta.vlansPermitidas ||
+    antes.observacao !== porta.observacao
+  if (mudouOutros && registros.length === 0) {
+    registros.push('Dados da porta atualizados')
+  }
+  registros.forEach((registro) => registrarHistorico(porta, registro))
+
   salvarSalas(salas)
   return porta
 }
@@ -900,6 +1029,56 @@ export function registrarFalhaPorta(
   }
   sala.falhas = [...(sala.falhas || []), falha]
   porta.falhaId = falha.id
+  registrarHistorico(
+    porta,
+    `Falha aberta: ${texto(descricao) || 'sem descrição'}`
+  )
   salvarSalas(salas)
   return falha
+}
+
+// Registra o resultado de um teste de certificação na porta
+// (PASS/FAIL), com data e hora do registro no app.
+export function registrarTestePorta(salaId, equipamentoId, portaId, resultado) {
+  const salas = carregarSalas()
+  const sala = encontrarSala(salas, salaId)
+  const equipamento = sala && encontrarEquipamentoNaSala(sala, equipamentoId)
+  const porta = equipamento && encontrarPorta(equipamento, portaId)
+  if (!porta) return null
+  const teste = resultado === 'PASS' ? 'PASS' : 'FAIL'
+  porta.ultimoTeste = teste
+  porta.dataUltimoTeste = agoraISO()
+  registrarHistorico(porta, `Teste ${teste} registrado`)
+  salvarSalas(salas)
+  return porta
+}
+
+// Libera a porta: desfaz a conexão e os vínculos (dispositivo, ponto de
+// rede, vínculo bidirecional e uplink). Mantém nome, estado, categoria
+// do cabo, resultado do teste e observação.
+export function liberarPorta(salaId, equipamentoId, portaId) {
+  const salas = carregarSalas()
+  const sala = encontrarSala(salas, salaId)
+  const equipamento = sala && encontrarEquipamentoNaSala(sala, equipamentoId)
+  const porta = equipamento && encontrarPorta(equipamento, portaId)
+  if (!porta) return null
+
+  if (porta.vinculo) {
+    const outroEquip = encontrarEquipamentoNaSala(
+      sala,
+      porta.vinculo.equipamentoId
+    )
+    const outraPorta =
+      outroEquip && encontrarPorta(outroEquip, porta.vinculo.portaId)
+    if (outraPorta?.vinculo?.portaId === portaId) {
+      outraPorta.vinculo = null
+    }
+  }
+  porta.vinculo = null
+  porta.dispositivoConectado = { tipo: '', nome: '', mac: '', ip: '' }
+  porta.pontoRede = { identificacao: '', local: '' }
+  porta.uplink = { ativo: false, destino: '' }
+  registrarHistorico(porta, 'Porta liberada')
+  salvarSalas(salas)
+  return porta
 }

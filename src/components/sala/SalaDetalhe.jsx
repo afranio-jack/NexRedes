@@ -17,7 +17,7 @@ import ListaRacks from '../rack/ListaRacks'
 import RackDetalhe from '../rack/RackDetalhe'
 import PaginaSwitch from '../rack/PaginaSwitch'
 import PaginaPatchPanel from '../rack/PaginaPatchPanel'
-import { obterRack } from '../../utils/racks'
+import { obterRack, listarEquipamentos } from '../../utils/racks'
 import Toast from '../Toast'
 
 const ABAS = [
@@ -34,6 +34,7 @@ export default function SalaDetalhe({
   const [aba, setAba] = useState('visao_geral')
   const [rackAbertoId, setRackAbertoId] = useState(null)
   const [equipamentoAbertoId, setEquipamentoAbertoId] = useState(null)
+  const [portaDestaqueId, setPortaDestaqueId] = useState(null)
   const [toast, setToast] = useState(null)
 
   const Icone = iconeSala(sala.icone)
@@ -61,10 +62,24 @@ export default function SalaDetalhe({
   function voltarParaSala() {
     setEquipamentoAbertoId(null)
     setRackAbertoId(null)
+    setPortaDestaqueId(null)
   }
 
   function voltarParaRack() {
     setEquipamentoAbertoId(null)
+    setPortaDestaqueId(null)
+  }
+
+  // Abre a página de um equipamento qualquer da sala (usado pelos links da
+  // cadeia do cabo no painel da porta), podendo já destacar uma porta dele.
+  function abrirEquipamento(equipamentoId, portaId) {
+    const equipamento = listarEquipamentos(sala).find(
+      (item) => item.id === equipamentoId
+    )
+    if (!equipamento) return
+    setRackAbertoId(equipamento.rackId)
+    setEquipamentoAbertoId(equipamentoId)
+    setPortaDestaqueId(portaId || null)
   }
 
   return (
@@ -113,6 +128,9 @@ export default function SalaDetalhe({
             onVoltarRack={voltarParaRack}
             onDadosAlterados={aoDadosAlterados}
             onMostrarToast={mostrarToast}
+            onAbrirEquipamento={abrirEquipamento}
+            portaDestaqueId={portaDestaqueId}
+            onDestaqueConsumido={() => setPortaDestaqueId(null)}
           />
         ) : (
           <PaginaPatchPanel
@@ -124,6 +142,9 @@ export default function SalaDetalhe({
             onVoltarRack={voltarParaRack}
             onDadosAlterados={aoDadosAlterados}
             onMostrarToast={mostrarToast}
+            onAbrirEquipamento={abrirEquipamento}
+            portaDestaqueId={portaDestaqueId}
+            onDestaqueConsumido={() => setPortaDestaqueId(null)}
           />
         )
       ) : rackAberto ? (

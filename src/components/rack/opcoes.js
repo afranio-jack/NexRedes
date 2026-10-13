@@ -29,6 +29,7 @@ export const ESTADOS_PORTA = [
   {
     id: 'livre',
     label: 'Livre',
+    selo: 'Livre',
     cor: '#ffffff',
     borda: '#d1d5db',
     Icone: PlugIcon,
@@ -38,6 +39,7 @@ export const ESTADOS_PORTA = [
   {
     id: 'certificada',
     label: 'Em uso (certificada)',
+    selo: 'Em uso e certificada',
     curto: 'Certificada',
     cor: '#16a34a',
     borda: '#16a34a',
@@ -48,6 +50,7 @@ export const ESTADOS_PORTA = [
   {
     id: 'aguardando',
     label: 'Em uso (aguardando teste)',
+    selo: 'Em uso, aguardando teste',
     curto: 'Aguardando teste',
     cor: '#2563eb',
     borda: '#2563eb',
@@ -58,6 +61,7 @@ export const ESTADOS_PORTA = [
   {
     id: 'uplink',
     label: 'Uplink',
+    selo: 'Uplink ou tronco',
     curto: 'Uplink',
     cor: '#7c3aed',
     borda: '#7c3aed',
@@ -68,6 +72,7 @@ export const ESTADOS_PORTA = [
   {
     id: 'atencao',
     label: 'Atenção',
+    selo: 'Atenção ou manutenção',
     curto: 'Atenção',
     cor: '#f59e0b',
     borda: '#f59e0b',
@@ -78,6 +83,7 @@ export const ESTADOS_PORTA = [
   {
     id: 'critica',
     label: 'Falha crítica',
+    selo: 'Falha crítica',
     curto: 'Crítica',
     cor: '#dc2626',
     borda: '#dc2626',
@@ -88,6 +94,7 @@ export const ESTADOS_PORTA = [
   {
     id: 'bloqueada',
     label: 'Desativada/Reservada',
+    selo: 'Desativada ou reservada',
     curto: 'Reservada',
     cor: '#374151',
     borda: '#374151',

@@ -417,3 +417,11 @@ export function ChevronRightIcon({ size }) {
     </Svg>
   )
 }
+
+export function ChevronLeftIcon({ size }) {
+  return (
+    <Svg size={size}>
+      <path d="m15 18-6-6 6-6" />
+    </Svg>
+  )
+}

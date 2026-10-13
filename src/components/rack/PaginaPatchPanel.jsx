@@ -1,9 +1,10 @@
-// Página do patch panel: duas faixas visuais (frente = lado do switch,
-// verso = lado dos pontos de rede), legenda clicável, filtros e tabela
-// agregada por número de porta com a cadeia do inventário:
+// Página do patch panel: resumo, legenda clicável (acima do painel), duas
+// faixas visuais (frente = lado do switch, verso = lado dos pontos de
+// rede) com largura responsiva, filtros e tabela agregada por número de
+// porta com a cadeia do inventário:
 // ponto de rede → porta do patch panel → porta do switch → categoria do cabo.
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   ArrowLeftIcon,
   PatchPanelIcon,
@@ -31,6 +32,8 @@ import {
   salvarPorta,
   salvarPortasLote,
   registrarFalhaPorta,
+  registrarTestePorta,
+  liberarPorta,
   buscarPortaVinculada,
   descricaoVinculo,
 } from '../../utils/racks'
@@ -46,11 +49,16 @@ export default function PaginaPatchPanel({
   onVoltarRack,
   onDadosAlterados,
   onMostrarToast,
+  onAbrirEquipamento,
+  portaDestaqueId,
+  onDestaqueConsumido,
 }) {
   const [filtro, setFiltro] = useState('todas')
   const [busca, setBusca] = useState('')
   const [ordenacao, setOrdenacao] = useState({ chave: 'numero', direcao: 1 })
   const [selecionados, setSelecionados] = useState(() => new Set()) // números
+  const faixaFrenteRef = useRef(null)
+  const faixaVersoRef = useRef(null)
   // painel = { portaIds: [...], lote, ladoInicial }
   const [painel, setPainel] = useState(null)
 
@@ -124,6 +132,27 @@ export default function PaginaPatchPanel({
         : [],
     [painel, todasPortas]
   )
+  // Passos de navegação do painel (‹ ›): um passo por número de porta
+  // (frente + verso juntas, como na tabela)
+  const passos = useMemo(
+    () =>
+      linhas.map((linha) =>
+        [linha.frente, linha.verso].filter(Boolean).map((p) => p.id)
+      ),
+    [linhas]
+  )
+
+  // Porta destacada vinda da cadeia do cabo de outro equipamento:
+  // abre a página já com o painel da porta vinculada
+  useEffect(() => {
+    if (!portaDestaqueId) return
+    const porta = todasPortas.find((p) => p.id === portaDestaqueId)
+    if (porta) {
+      setPainel({ portaIds: [porta.id], lote: false, ladoInicial: porta.lado })
+    }
+    onDestaqueConsumido?.()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [portaDestaqueId])
 
   function aoOrdenar(chave) {
     setOrdenacao((atual) =>
@@ -142,6 +171,14 @@ export default function PaginaPatchPanel({
     return saida
   }
 
+  function focarPorta(portaId) {
+    return (
+      faixaFrenteRef.current?.focarPorta(portaId) ||
+      faixaVersoRef.current?.focarPorta(portaId) ||
+      false
+    )
+  }
+
   function abrirPainelLinha(linha) {
     setPainel({
       portaIds: portasDoNumero(linha.numero).map((p) => p.id),
@@ -157,6 +194,26 @@ export default function PaginaPatchPanel({
       ids.push(...portasDoNumero(numero).map((p) => p.id))
     })
     setPainel({ portaIds: ids, lote: true, ladoInicial: null })
+  }
+
+  function fecharPainel(focoPortaId) {
+    setPainel(null)
+    if (focoPortaId) {
+      requestAnimationFrame(() => focarPorta(focoPortaId))
+    }
+  }
+
+  function aoTrocarPasso(indice, lado) {
+    setPainel((atual) =>
+      atual
+        ? {
+            ...atual,
+            portaIds: passos[indice],
+            lote: false,
+            ladoInicial: lado || atual.ladoInicial || 'frente',
+          }
+        : atual
+    )
   }
 
   function toggleNumero(numero) {
@@ -183,7 +240,7 @@ export default function PaginaPatchPanel({
   function aoSalvarIndividual(porta, dados) {
     salvarPorta(sala.id, equipamento.id, porta.id, dados)
     onDadosAlterados()
-    setPainel(null)
+    fecharPainel(porta.id)
     onMostrarToast('Porta atualizada com sucesso')
   }
 
@@ -199,6 +256,20 @@ export default function PaginaPatchPanel({
     registrarFalhaPorta(sala.id, equipamento.id, porta.id, dadosFalha)
     onDadosAlterados()
     onMostrarToast('Falha registrada na porta')
+  }
+
+  function aoRegistrarTeste(porta, resultado) {
+    registrarTestePorta(sala.id, equipamento.id, porta.id, resultado)
+    onDadosAlterados()
+    onMostrarToast(
+      resultado === 'PASS' ? 'Teste PASS registrado' : 'Teste FAIL registrado'
+    )
+  }
+
+  function aoLiberar(porta) {
+    liberarPorta(sala.id, equipamento.id, porta.id)
+    onDadosAlterados()
+    onMostrarToast('Porta liberada')
   }
 
   // Rótulos acima das portas conectadas (nome abreviado + ícone)
@@ -261,6 +332,8 @@ export default function PaginaPatchPanel({
     return linhas
   }
 
+  const estadoFiltro = filtro.startsWith('est-') ? filtro.slice(4) : null
+
   return (
     <div className="equip-pagina">
       <div className="equip-topo">
@@ -300,6 +373,12 @@ export default function PaginaPatchPanel({
 
       <ResumoPortas resumo={resumo} />
 
+      <LegendaPortas
+        contagens={contagensEstado}
+        filtroEstado={estadoFiltro ? filtro : null}
+        onFiltrarEstado={(id) => setFiltro(id || 'todas')}
+      />
+
       <section className="rack-vista-bloco">
         <h2>
           <SwitchIcon size={18} />
@@ -309,12 +388,14 @@ export default function PaginaPatchPanel({
           Onde o patch cord liga o patch panel às portas do switch.
         </p>
         <FaixaPortas
+          ref={faixaFrenteRef}
           portas={frente}
           modo="patch_panel"
           falhas={falhas}
           selecionadaId={
             painel && !painel.lote ? painel.portaIds[0] : null
           }
+          estadoFiltro={estadoFiltro}
           onClicarPorta={(porta) =>
             setPainel({
               portaIds: [porta.id],
@@ -337,12 +418,14 @@ export default function PaginaPatchPanel({
           Onde o cabo horizontal sai até a tomada/ponto de rede na parede.
         </p>
         <FaixaPortas
+          ref={faixaVersoRef}
           portas={verso}
           modo="patch_panel"
           falhas={falhas}
           selecionadaId={
             painel && !painel.lote ? painel.portaIds[0] : null
           }
+          estadoFiltro={estadoFiltro}
           onClicarPorta={(porta) =>
             setPainel({
               portaIds: [porta.id],
@@ -355,12 +438,6 @@ export default function PaginaPatchPanel({
           titulo={`Verso do patch panel ${equipamento.nome}`}
         />
       </section>
-
-      <LegendaPortas
-        contagens={contagensEstado}
-        filtroEstado={filtro.startsWith('est-') ? filtro : null}
-        onFiltrarEstado={(id) => setFiltro(id || 'todas')}
-      />
 
       <section className="rack-vista-bloco">
         <div className="tabela-topo">
@@ -421,14 +498,22 @@ export default function PaginaPatchPanel({
       {painel && portasPainel.length > 0 && (
         <PainelPorta
           sala={sala}
+          rack={rack}
           equipamento={equipamento}
           portas={portasPainel}
+          passos={passos}
           lote={painel.lote}
           ladoInicial={painel.ladoInicial}
-          onFechar={() => setPainel(null)}
+          onFechar={() => fecharPainel(painel.portaIds[0])}
+          onTrocarPasso={aoTrocarPasso}
           onSalvarIndividual={aoSalvarIndividual}
           onSalvarLote={aoSalvarLote}
           onRegistrarFalha={aoRegistrarFalha}
+          onRegistrarTeste={aoRegistrarTeste}
+          onLiberar={aoLiberar}
+          onAbrirEquipamento={onAbrirEquipamento}
+          onVoltarSala={onVoltarSala}
+          onVoltarRack={onVoltarRack}
         />
       )}
     </div>

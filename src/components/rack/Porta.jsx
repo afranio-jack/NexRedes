@@ -8,6 +8,7 @@ export default function Porta({
   numero,
   estadoInfo,
   selecionada,
+  apagada,
   tabIndex,
   linhasTooltip,
   aoClicar,
@@ -56,7 +57,7 @@ export default function Porta({
         type="button"
         className={`porta-visual porta-${estadoInfo.id}${
           selecionada ? ' selecionada' : ''
-        }${porta.sfp ? ' porta-sfp' : ''}`}
+        }${apagada ? ' apagada' : ''}${porta.sfp ? ' porta-sfp' : ''}`}
         style={{ background: estadoInfo.cor, borderColor: estadoInfo.borda }}
         onClick={() => aoClicar?.(porta)}
         onMouseEnter={abrirTooltip}

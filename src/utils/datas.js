@@ -32,6 +32,22 @@ export function formatarDataRelativa(iso) {
   return data.toLocaleDateString('pt-BR')
 }
 
+// Data e hora atuais em ISO completo (para histórico de eventos no app)
+export function agoraISO() {
+  return new Date().toISOString()
+}
+
+// "dd/mm/aaaa, hh:mm" a partir de um ISO completo
+export function formatarDataHora(iso) {
+  if (!iso) return '—'
+  const data = new Date(iso)
+  if (Number.isNaN(data.getTime())) return '—'
+  return data.toLocaleString('pt-BR', {
+    dateStyle: 'short',
+    timeStyle: 'short',
+  })
+}
+
 // Data de hoje no formato yyyy-mm-dd (para <input type="date">)
 export function hojeISO() {
   const agora = new Date()

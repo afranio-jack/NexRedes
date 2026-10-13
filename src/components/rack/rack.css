@@ -189,7 +189,7 @@
 /* ---------- Vista frontal do rack ---------- */
 
 .rack-vista-bloco {
-  padding: 20px 24px;
+  padding: 24px 28px;
   background: #fff;
   border: 1px solid #e5e7eb;
   border-radius: 14px;
@@ -471,16 +471,18 @@
 }
 
 /* ---------- Porta visual (quadradinho) ---------- */
+/* O tamanho vem de --porta-tam, calculado pelo FaixaPortas a partir da
+   largura disponível do card (quadrado entre 40 e 72 px). */
 
 .faixa-wrap {
   overflow-x: auto;
-  padding: 4px 2px 8px;
+  padding: 6px 8px 14px;
 }
 
 .faixa-portas {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
   width: max-content;
   min-width: 100%;
   margin: 0 auto;
@@ -488,40 +490,42 @@
 
 .faixa-fileira {
   display: flex;
-  gap: 4px;
-  align-items: stretch;
+  gap: 6px;
+  justify-content: center;
+  align-items: center;
 }
 
 .faixa-celula {
-  width: 38px;
-  flex-shrink: 0;
+  flex: 0 0 var(--porta-tam, 46px);
+  width: var(--porta-tam, 46px);
   display: inline-flex;
   justify-content: center;
 }
 
 .faixa-sep {
-  width: 18px;
-  flex-shrink: 0;
+  flex: 0 0 22px;
+  width: 22px;
   border-left: 2px dashed #d1d5db;
-  margin: 0 4px;
+  margin: 0 5px;
+  align-self: stretch;
 }
 
 .porta-visual {
   position: relative;
-  width: 34px;
-  height: 30px;
+  width: var(--porta-tam, 46px);
+  height: var(--porta-tam, 46px);
   padding: 0;
   border: 1px solid;
-  border-radius: 5px;
+  border-radius: calc(var(--porta-tam, 46px) * 0.22);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   font: inherit;
-  font-size: 11px;
-  font-weight: 700;
+  font-size: max(13px, calc(var(--porta-tam, 46px) * 0.3));
+  font-weight: 800;
   color: #fff;
   cursor: pointer;
-  transition: transform 0.1s, box-shadow 0.15s;
+  transition: transform 0.12s, box-shadow 0.15s, opacity 0.15s;
 }
 
 /* Porta livre: fundo branco, número escuro */
@@ -530,8 +534,9 @@
 }
 
 .porta-visual:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 3px 8px rgba(17, 24, 39, 0.15);
+  transform: translateY(-2px) scale(1.04);
+  box-shadow: 0 6px 14px rgba(17, 24, 39, 0.18);
+  z-index: 3;
 }
 
 .porta-visual:focus-visible {
@@ -539,28 +544,45 @@
   outline-offset: 2px;
 }
 
+/* Porta selecionada (painel aberto): borda roxa mais grossa + leve aumento */
 .porta-visual.selecionada {
-  outline: 2px solid #2563eb;
+  outline: 3px solid #7c3aed;
   outline-offset: 1px;
+  transform: scale(1.08);
+  z-index: 2;
+}
+
+/* Portas fora do estado filtrado pela legenda ficam levemente apagadas */
+.porta-visual.apagada {
+  opacity: 0.25;
+}
+
+.porta-visual.apagada:hover {
+  transform: none;
+  box-shadow: none;
 }
 
 .porta-visual.porta-sfp {
   border-radius: 999px;
-  width: 30px;
 }
 
 .porta-estado-icone {
   position: absolute;
-  right: -5px;
-  bottom: -5px;
-  width: 15px;
-  height: 15px;
+  right: calc(var(--porta-tam, 46px) * -0.1);
+  bottom: calc(var(--porta-tam, 46px) * -0.1);
+  width: calc(var(--porta-tam, 46px) * 0.42);
+  height: calc(var(--porta-tam, 46px) * 0.42);
   border-radius: 50%;
-  border: 1.5px solid #fff;
+  border: 2px solid #fff;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   box-sizing: content-box;
+}
+
+.porta-estado-icone svg {
+  width: 56%;
+  height: 56%;
 }
 
 /* Tooltip da porta (position fixed para escapar do overflow) */
@@ -615,10 +637,10 @@
 }
 
 .rotulo-nome {
-  font-size: 9px;
+  font-size: 10px;
   font-weight: 600;
   color: #4b5563;
-  max-width: 36px;
+  max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -626,7 +648,7 @@
 
 .rotulo-linha {
   width: 1px;
-  height: 7px;
+  height: 8px;
   background: #cbd5e1;
   flex-shrink: 0;
 }
@@ -638,13 +660,14 @@
 }
 
 /* ---------- Legenda de estados ---------- */
+/* Uma única linha horizontal de chips (quebra só se faltar espaço). */
 
 .legenda-portas {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px 6px;
   flex-wrap: wrap;
-  padding: 10px 14px;
+  padding: 12px 16px;
   background: #fff;
   border: 1px solid #e5e7eb;
   border-radius: 12px;
@@ -656,12 +679,13 @@
   gap: 7px;
   padding: 6px 10px;
   border: 1px solid transparent;
-  border-radius: 9px;
+  border-radius: 999px;
   background: none;
   font: inherit;
   font-size: 11.5px;
   color: #4b5563;
   cursor: pointer;
+  white-space: nowrap;
   transition: background 0.15s, border-color 0.15s;
 }
 
@@ -672,6 +696,7 @@
 .legenda-item.ativo {
   background: #eff6ff;
   border-color: #2563eb;
+  box-shadow: 0 0 0 1px #2563eb;
   color: #2563eb;
 }
 
@@ -688,7 +713,6 @@
 
 .legenda-texto {
   font-weight: 600;
-  max-width: 230px;
   text-align: left;
 }
 
@@ -1093,6 +1117,11 @@
   background: rgba(17, 24, 39, 0.4);
 }
 
+/* Confirmações abertas dentro do painel ficam acima do drawer */
+.painel-overlay .confirm-overlay {
+  z-index: 320;
+}
+
 .porta-painel {
   position: fixed;
   top: 0;
@@ -1101,10 +1130,15 @@
   z-index: 310;
   display: flex;
   flex-direction: column;
-  width: min(430px, 100vw);
+  width: min(460px, 100vw);
   background: #fff;
   box-shadow: -12px 0 32px rgba(17, 24, 39, 0.18);
   animation: painel-entra 0.18s ease-out;
+}
+
+/* [hidden] sempre esconde, mesmo com display definido (abas do painel) */
+.porta-painel [hidden] {
+  display: none !important;
 }
 
 @keyframes painel-entra {
@@ -1272,6 +1306,584 @@
   height: 40px;
 }
 
+/* ---------- Painel da porta: cabeçalho, abas e aba Resumo ---------- */
+
+.painel-cabecalho-porta {
+  min-width: 0;
+  flex: 1;
+}
+
+.painel-cabecalho-linha {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.painel-cabecalho-linha + .painel-cabecalho-linha {
+  margin-top: 8px;
+}
+
+.painel-cabecalho-linha h3 {
+  font-size: 20px;
+  font-weight: 800;
+  color: #1f2937;
+}
+
+.painel-nav {
+  display: inline-flex;
+  gap: 4px;
+}
+
+.painel-nav-seta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #fff;
+  color: #374151;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.painel-nav-seta:hover {
+  background: #eff6ff;
+  border-color: #2563eb;
+  color: #2563eb;
+}
+
+.painel-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border: 1px solid;
+  border-radius: 999px;
+  font-size: 11.5px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.painel-nome-porta {
+  font-size: 13px;
+  font-weight: 500;
+  color: #6b7280;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 240px;
+}
+
+.painel-abas {
+  display: flex;
+  gap: 6px;
+  padding: 10px 22px 0;
+}
+
+.painel-aba-btn {
+  height: 34px;
+  padding: 0 18px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #fff;
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #6b7280;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.painel-aba-btn.ativo {
+  background: #eff6ff;
+  border-color: #2563eb;
+  color: #2563eb;
+}
+
+.painel-resumo {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Ações no topo do Resumo */
+.painel-acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 14px 22px;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.painel-acoes .btn-modal {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 34px;
+  padding: 0 12px;
+  font-size: 12.5px;
+}
+
+.painel-acoes .btn-registrar-falha {
+  height: 34px;
+  padding: 0 12px;
+  font-size: 12.5px;
+}
+
+.btn-liberar-porta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 34px;
+  padding: 0 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  background: #fff;
+  color: #6b7280;
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.btn-liberar-porta:hover {
+  background: #fef2f2;
+  border-color: #dc2626;
+  color: #dc2626;
+}
+
+/* Localização: Sala > Rack > Equipamento > Porta */
+.painel-localizacao {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-wrap: wrap;
+  font-size: 12.5px;
+}
+
+.painel-localizacao button {
+  border: none;
+  background: none;
+  padding: 0;
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #2563eb;
+  cursor: pointer;
+}
+
+.painel-localizacao button:hover {
+  text-decoration: underline;
+}
+
+.painel-localizacao svg {
+  color: #9ca3af;
+  flex-shrink: 0;
+}
+
+/* Conexão */
+.conexao-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+}
+
+.conexao-icone {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: #f3f4f6;
+  color: #2563eb;
+  flex-shrink: 0;
+}
+
+.conexao-nome {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.conexao-detalhe {
+  margin: 2px 0 0;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.conexao-vazia {
+  text-align: center;
+  padding: 14px 8px 18px;
+}
+
+.conexao-vazia-icone {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  border: 2px dashed #d1d5db;
+  border-radius: 50%;
+  color: #9ca3af;
+  margin-bottom: 8px;
+}
+
+.conexao-vazia p {
+  margin: 0 0 12px;
+  font-size: 13px;
+  color: #6b7280;
+}
+
+/* Cadeia do cabo: Ponto de rede → Patch panel/porta → Switch/porta → Categoria */
+.cadeia {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+
+.cadeia-seta {
+  display: inline-flex;
+  color: #9ca3af;
+  flex-shrink: 0;
+}
+
+.cadeia-item {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 104px;
+  padding: 8px 10px;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  background: #fff;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  flex-shrink: 0;
+}
+
+.cadeia-item.vazio {
+  border-style: dashed;
+}
+
+button.cadeia-item.clicavel {
+  cursor: pointer;
+  border-color: #bfdbfe;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+button.cadeia-item.clicavel:hover {
+  background: #eff6ff;
+  border-color: #2563eb;
+}
+
+.cadeia-tipo {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #9ca3af;
+}
+
+.cadeia-tipo svg {
+  flex-shrink: 0;
+}
+
+.cadeia-rotulo {
+  font-size: 12px;
+  font-weight: 600;
+  color: #1f2937;
+  word-break: break-word;
+}
+
+.cadeia-item.vazio .cadeia-rotulo {
+  color: #9ca3af;
+  font-weight: 500;
+}
+
+/* Fatos em grade (cabo, rede) */
+.painel-fatos {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 14px;
+  margin: 0;
+}
+
+.fato dt {
+  margin: 0;
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #9ca3af;
+}
+
+.fato dd {
+  margin: 2px 0 0;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #1f2937;
+  word-break: break-word;
+}
+
+/* Certificação */
+.certificacao-linha {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+.selo-teste {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border: 1px solid;
+  border-radius: 999px;
+  font-size: 11.5px;
+  font-weight: 800;
+}
+
+.selo-teste.pass {
+  background: #ecfdf5;
+  border-color: #a7f3d0;
+  color: #047857;
+}
+
+.selo-teste.fail {
+  background: #fef2f2;
+  border-color: #fecaca;
+  color: #b91c1c;
+}
+
+.selo-teste.sem_teste {
+  background: #f3f4f6;
+  border-color: #e5e7eb;
+  color: #6b7280;
+}
+
+.certificacao-data {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.medicoes {
+  margin: 0 0 10px;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.medicoes li {
+  font-size: 12.5px;
+  color: #374151;
+}
+
+.medicao-ok {
+  margin-left: 6px;
+  color: #047857;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.medicao-fora {
+  margin-left: 6px;
+  color: #b91c1c;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.btn-registrar-teste {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 38px;
+  padding: 0 14px;
+  border: 1px solid #a7f3d0;
+  border-radius: 10px;
+  background: #fff;
+  color: #047857;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.btn-registrar-teste:hover {
+  background: #ecfdf5;
+  border-color: #047857;
+}
+
+.teste-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.teste-botoes {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.btn-teste {
+  height: 36px;
+  padding: 0 14px;
+  border: 1px solid;
+  border-radius: 10px;
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.btn-teste.pass {
+  background: #ecfdf5;
+  border-color: #047857;
+  color: #047857;
+}
+
+.btn-teste.pass:hover {
+  background: #d1fae5;
+}
+
+.btn-teste.fail {
+  background: #fef2f2;
+  border-color: #b91c1c;
+  color: #b91c1c;
+}
+
+.btn-teste.fail:hover {
+  background: #fee2e2;
+}
+
+/* Falhas e manutenção */
+.falha-item {
+  padding: 10px 12px;
+  border: 1px solid #fcd34d;
+  border-radius: 10px;
+  background: #fffbeb;
+  font-size: 12.5px;
+  color: #92400e;
+}
+
+.falha-item.critica {
+  border-color: #fca5a5;
+  background: #fef2f2;
+  color: #991b1b;
+}
+
+.falha-item p {
+  margin: 4px 0 0;
+  font-size: 11.5px;
+  opacity: 0.85;
+}
+
+.falha-item-topo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.falha-badge {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.75);
+  font-size: 10.5px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* Histórico (linha do tempo) */
+.historico {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.historico-item {
+  position: relative;
+  padding: 0 0 14px 20px;
+  font-size: 12.5px;
+  color: #374151;
+}
+
+.historico-item:last-child {
+  padding-bottom: 2px;
+}
+
+.historico-item::before {
+  content: '';
+  position: absolute;
+  left: 4px;
+  top: 6px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #2563eb;
+}
+
+.historico-item::after {
+  content: '';
+  position: absolute;
+  left: 7.5px;
+  top: 18px;
+  bottom: 2px;
+  width: 1px;
+  background: #e5e7eb;
+}
+
+.historico-item:last-child::after {
+  display: none;
+}
+
+.historico-data {
+  display: block;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: #9ca3af;
+}
+
+.historico-texto {
+  display: block;
+  margin-top: 1px;
+  line-height: 1.4;
+}
+
+/* Observações */
+.painel-observacao {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #374151;
+  white-space: pre-wrap;
+}
+
+.painel-nota-lote {
+  padding: 14px 22px 0;
+}
+
 /* ---------- Responsivo ---------- */
 
 @media (max-width: 768px) {
@@ -1295,10 +1907,6 @@
   .filtros-busca {
     min-width: 0;
     flex: 1;
-  }
-
-  .legenda-texto {
-    max-width: 150px;
   }
 }
 
@@ -1329,17 +1937,14 @@
     align-items: flex-start;
   }
 
-  .legenda-texto {
-    display: none;
+  /* Legenda vira uma linha com rolagem horizontal em telas pequenas */
+  .legenda-portas {
+    flex-wrap: nowrap;
+    overflow-x: auto;
   }
 
-  .legenda-quadro {
-    width: 22px;
-    height: 18px;
-  }
-
-  .legenda-item.ativo .legenda-texto {
-    display: inline;
+  .painel-cabecalho-linha h3 {
+    font-size: 17px;
   }
 
   .resumo-portas {

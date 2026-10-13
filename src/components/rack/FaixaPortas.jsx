@@ -1,16 +1,24 @@
 // Faixa visual de portas:
 // - modo "switch": duas fileiras (ímpares em cima, pares embaixo), portas
-//   SFP/uplink separadas à direita, rótulos de dispositivo acima e abaixo,
-//   ligados à porta por uma linha fina.
+//   SFP/uplink separadas à direita pela divisória tracejada, rótulos de
+//   dispositivo acima e abaixo, ligados à porta por uma linha fina.
 // - modo "patch_panel": uma única fileira horizontal (quebra em duas quando
 //   há mais de 26 portas), rótulos acima das portas conectadas.
+//
+// O tamanho de cada porta é calculado a partir da largura disponível do card
+// (ResizeObserver): quadrado entre 40 e 72 px, centralizado quando sobra
+// espaço; se o mínimo não couber, o conjunto rola na horizontal.
 
-import { Fragment, useMemo, useRef, useState } from 'react'
+import { Fragment, forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react'
 import Porta from './Porta'
 import { calcularEstadoPorta } from '../../utils/racks'
 import { estadoPortaInfo } from './opcoes'
 
 const LIMITE_UNICA_FILEIRA = 26
+const TAM_MINIMO = 40
+const TAM_MAXIMO = 72
+const GAP_COLUNA = 6
+const LARGURA_SEPARADOR = 22 // divisória + margens
 
 function RotuloCelula({ rotulo, baixo }) {
   if (!rotulo) return <span className="faixa-celula"></span>
@@ -28,18 +36,24 @@ function RotuloCelula({ rotulo, baixo }) {
   )
 }
 
-export default function FaixaPortas({
-  portas,
-  modo,
-  falhas = [],
-  selecionadaId,
-  onClicarPorta,
-  rotuloDaPorta,
-  linhasDaPorta,
-  titulo = 'Portas',
-}) {
+const FaixaPortas = forwardRef(function FaixaPortas(
+  {
+    portas,
+    modo,
+    falhas = [],
+    selecionadaId,
+    estadoFiltro,
+    onClicarPorta,
+    rotuloDaPorta,
+    linhasDaPorta,
+    titulo = 'Portas',
+  },
+  ref
+) {
   const refs = useRef({})
+  const wrapRef = useRef(null)
   const [focoId, setFocoId] = useState(null)
+  const [portaTam, setPortaTam] = useState(46)
 
   const estrutura = useMemo(() => {
     if (modo === 'switch') {
@@ -79,6 +93,55 @@ export default function FaixaPortas({
     }
   }, [portas, modo])
 
+  // Medidas para o cálculo do tamanho da porta
+  const medidas = useMemo(() => {
+    let colunas = 0
+    let separadores = 0
+    for (const fileira of estrutura.fileiras) {
+      colunas = Math.max(colunas, fileira.portas.length)
+      if (fileira.sepIndex >= 0) separadores = 1
+    }
+    return { colunas, separadores }
+  }, [estrutura])
+
+  // Porta quadrada que cresce com o card (mín. 40, máx. 72)
+  useEffect(() => {
+    const alvo = wrapRef.current
+    if (!alvo) return
+    function medir() {
+      const { colunas, separadores } = medidas
+      if (colunas <= 0) return
+      const util = alvo.clientWidth - 16 // padding horizontal do wrap
+      const fixos = separadores * LARGURA_SEPARADOR
+      const lacunas = GAP_COLUNA * (colunas + separadores - 1)
+      const calculado = Math.floor((util - fixos - lacunas) / colunas)
+      setPortaTam(Math.min(TAM_MAXIMO, Math.max(TAM_MINIMO, calculado)))
+    }
+    medir()
+    if (typeof ResizeObserver === 'undefined') {
+      window.addEventListener('resize', medir)
+      return () => window.removeEventListener('resize', medir)
+    }
+    const observador = new ResizeObserver(medir)
+    observador.observe(alvo)
+    return () => observador.disconnect()
+  }, [medidas])
+
+  // Devolve o foco para a porta (usado ao fechar o painel lateral)
+  useImperativeHandle(ref, () => ({
+    focarPorta(portaId) {
+      const botao = refs.current[portaId]?.querySelector('button')
+      if (!botao) return false
+      botao.focus()
+      botao.scrollIntoView({
+        block: 'nearest',
+        inline: 'center',
+        behavior: 'smooth',
+      })
+      return true
+    },
+  }))
+
   function aoTeclar(porta, event) {
     const { fileiras } = estrutura
     if (!['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(event.key))
@@ -117,6 +180,7 @@ export default function FaixaPortas({
       const info = estadoPortaInfo(estado)
       const primeira =
         estrutura.fileiras[0].portas[0]?.id === porta.id
+      const apagada = estadoFiltro ? estado !== estadoFiltro : false
       return (
         <Fragment key={porta.id}>
           {fileira.sepIndex === ci && (
@@ -130,6 +194,7 @@ export default function FaixaPortas({
           ) : (
             <span
               className="faixa-celula"
+              data-porta-id={porta.id}
               ref={(el) => {
                 if (el) refs.current[porta.id] = el
                 else delete refs.current[porta.id]
@@ -140,6 +205,7 @@ export default function FaixaPortas({
                 numero={porta.numero}
                 estadoInfo={info}
                 selecionada={porta.id === selecionadaId}
+                apagada={apagada}
                 linhasTooltip={linhasDaPorta ? linhasDaPorta(porta) : undefined}
                 tabIndex={
                   porta.id === focoId || (!focoId && primeira) ? 0 : -1
@@ -156,8 +222,13 @@ export default function FaixaPortas({
   }
 
   return (
-    <div className="faixa-wrap">
-      <div className="faixa-portas" role="group" aria-label={titulo}>
+    <div className="faixa-wrap" ref={wrapRef}>
+      <div
+        className="faixa-portas"
+        role="group"
+        aria-label={titulo}
+        style={{ '--porta-tam': `${portaTam}px` }}
+      >
         {estrutura.fileiras.map((fileira, fi) => (
           <Fragment key={fi}>
             {!fileira.rotulosBaixo && (
@@ -178,4 +249,6 @@ export default function FaixaPortas({
       </div>
     </div>
   )
-}
+})
+
+export default FaixaPortas

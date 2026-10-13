@@ -1,8 +1,9 @@
-// Página do switch: resumo, painel visual de portas (duas fileiras + SFP),
-// legenda clicável, filtros/busca, tabela completa com ordenação e seleção
-// em lote, painel lateral de edição e registro de falha por porta.
+// Página do switch: resumo, legenda clicável (acima do painel), painel
+// visual de portas em duas fileiras + SFP (largura responsiva),
+// filtros/busca, tabela completa com ordenação e seleção em lote e painel
+// lateral da porta (resumo, edição, falha, teste e liberação).
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   ArrowLeftIcon,
   SwitchIcon,
@@ -28,6 +29,8 @@ import {
   salvarPorta,
   salvarPortasLote,
   registrarFalhaPorta,
+  registrarTestePorta,
+  liberarPorta,
   buscarPortaVinculada,
   descricaoVinculo,
 } from '../../utils/racks'
@@ -49,11 +52,15 @@ export default function PaginaSwitch({
   onVoltarRack,
   onDadosAlterados,
   onMostrarToast,
+  onAbrirEquipamento,
+  portaDestaqueId,
+  onDestaqueConsumido,
 }) {
   const [filtro, setFiltro] = useState('todas')
   const [busca, setBusca] = useState('')
   const [ordenacao, setOrdenacao] = useState({ chave: 'numero', direcao: 1 })
   const [selecionadas, setSelecionadas] = useState(() => new Set())
+  const faixaRef = useRef(null)
   // painel = { portaIds: [...], lote: bool, ladoInicial }
   const [painel, setPainel] = useState(null)
 
@@ -97,6 +104,26 @@ export default function PaginaSwitch({
         : [],
     [painel, portas]
   )
+  // Passos de navegação do painel (‹ ›): uma porta por passo
+  const passos = useMemo(
+    () =>
+      [...portas]
+        .sort((a, b) => a.numero - b.numero)
+        .map((porta) => [porta.id]),
+    [portas]
+  )
+
+  // Porta destacada vinda da cadeia do cabo de outro equipamento:
+  // abre a página já com o painel da porta vinculado
+  useEffect(() => {
+    if (!portaDestaqueId) return
+    const porta = portas.find((p) => p.id === portaDestaqueId)
+    if (porta) {
+      setPainel({ portaIds: [porta.id], lote: false, ladoInicial: porta.lado })
+    }
+    onDestaqueConsumido?.()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [portaDestaqueId])
 
   function aoOrdenar(chave) {
     setOrdenacao((atual) =>
@@ -113,6 +140,21 @@ export default function PaginaSwitch({
   function abrirPainelLote() {
     if (selecionadas.size === 0) return
     setPainel({ portaIds: [...selecionadas], lote: true, ladoInicial: null })
+  }
+
+  function fecharPainel(focoPortaId) {
+    setPainel(null)
+    if (focoPortaId) {
+      requestAnimationFrame(() => faixaRef.current?.focarPorta(focoPortaId))
+    }
+  }
+
+  function aoTrocarPasso(indice) {
+    setPainel((atual) =>
+      atual
+        ? { ...atual, portaIds: passos[indice], lote: false, ladoInicial: null }
+        : atual
+    )
   }
 
   function toggleSelecao(portaId) {
@@ -139,7 +181,7 @@ export default function PaginaSwitch({
   function aoSalvarIndividual(porta, dados) {
     salvarPorta(sala.id, equipamento.id, porta.id, dados)
     onDadosAlterados()
-    setPainel(null)
+    fecharPainel(porta.id)
     onMostrarToast('Porta atualizada com sucesso')
   }
 
@@ -155,6 +197,20 @@ export default function PaginaSwitch({
     registrarFalhaPorta(sala.id, equipamento.id, porta.id, dadosFalha)
     onDadosAlterados()
     onMostrarToast('Falha registrada na porta')
+  }
+
+  function aoRegistrarTeste(porta, resultado) {
+    registrarTestePorta(sala.id, equipamento.id, porta.id, resultado)
+    onDadosAlterados()
+    onMostrarToast(
+      resultado === 'PASS' ? 'Teste PASS registrado' : 'Teste FAIL registrado'
+    )
+  }
+
+  function aoLiberar(porta) {
+    liberarPorta(sala.id, equipamento.id, porta.id)
+    onDadosAlterados()
+    onMostrarToast('Porta liberada')
   }
 
   function rotuloDaPorta(porta) {
@@ -210,6 +266,8 @@ export default function PaginaSwitch({
     return linhas
   }
 
+  const estadoFiltro = filtro.startsWith('est-') ? filtro.slice(4) : null
+
   return (
     <div className="equip-pagina">
       <div className="equip-topo">
@@ -254,30 +312,32 @@ export default function PaginaSwitch({
 
       <ResumoPortas resumo={resumo} />
 
+      <LegendaPortas
+        contagens={contagensEstado}
+        filtroEstado={estadoFiltro ? filtro : null}
+        onFiltrarEstado={(id) => setFiltro(id || 'todas')}
+      />
+
       <section className="rack-vista-bloco">
         <h2>
           <SwitchIcon size={18} />
           Painel de portas
         </h2>
         <FaixaPortas
+          ref={faixaRef}
           portas={portas}
           modo="switch"
           falhas={falhas}
           selecionadaId={
             painel && !painel.lote ? painel.portaIds[0] : null
           }
+          estadoFiltro={estadoFiltro}
           onClicarPorta={abrirPainelPorta}
           rotuloDaPorta={rotuloDaPorta}
           linhasDaPorta={linhasTooltip}
           titulo={`Portas do switch ${equipamento.nome}`}
         />
       </section>
-
-      <LegendaPortas
-        contagens={contagensEstado}
-        filtroEstado={filtro.startsWith('est-') ? filtro : null}
-        onFiltrarEstado={(id) => setFiltro(id || 'todas')}
-      />
 
       <section className="rack-vista-bloco">
         <div className="tabela-topo">
@@ -337,14 +397,22 @@ export default function PaginaSwitch({
       {painel && portasPainel.length > 0 && (
         <PainelPorta
           sala={sala}
+          rack={rack}
           equipamento={equipamento}
           portas={portasPainel}
+          passos={passos}
           lote={painel.lote}
           ladoInicial={painel.ladoInicial}
-          onFechar={() => setPainel(null)}
+          onFechar={() => fecharPainel(painel.portaIds[0])}
+          onTrocarPasso={aoTrocarPasso}
           onSalvarIndividual={aoSalvarIndividual}
           onSalvarLote={aoSalvarLote}
           onRegistrarFalha={aoRegistrarFalha}
+          onRegistrarTeste={aoRegistrarTeste}
+          onLiberar={aoLiberar}
+          onAbrirEquipamento={onAbrirEquipamento}
+          onVoltarSala={onVoltarSala}
+          onVoltarRack={onVoltarRack}
         />
       )}
     </div>
