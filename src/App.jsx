@@ -6,10 +6,11 @@ import Success from './components/Success'
 import Logo from './components/Logo'
 import NaoEncontrada from './components/NaoEncontrada'
 import Dashboard from './components/Dashboard'
+import { rotaConhecida } from './utils/rotas'
 
 export default function App() {
   const [rotaInexistente, setRotaInexistente] = useState(
-    () => window.location.pathname.replace(/\/+$/, '') !== ''
+    () => !rotaConhecida(window.location.pathname)
   )
   const [view, setView] = useState('login')
   const [loggedUser, setLoggedUser] = useState(null)
@@ -19,6 +20,8 @@ export default function App() {
     setLoggedUser(null)
     setNotice('')
     setView('login')
+    // Ao encerrar a sessão, volta para a home (a rota da sessão não persiste)
+    window.history.replaceState(null, '', '/')
   }
 
   function voltarDaRotaInexistente() {

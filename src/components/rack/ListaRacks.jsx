@@ -13,6 +13,7 @@ import {
 } from '../icons'
 import RackModal from './RackModal'
 import ConfirmDialog from '../sala/ConfirmDialog'
+import { aoExcluirEquipamento } from '../../utils/pontos'
 import {
   criarRack,
   editarRack,
@@ -155,6 +156,10 @@ export default function ListaRacks({
   function confirmarExclusao() {
     if (!rackParaExcluir) return
     excluirRack(sala.id, rackParaExcluir.id)
+    // Zera os lados dos pontos estruturados que usavam os equipamentos
+    for (const equipamento of rackParaExcluir.equipamentos || []) {
+      aoExcluirEquipamento(sala.id, equipamento.id)
+    }
     onDadosAlterados()
     onMostrarToast('Rack excluído')
     setRackParaExcluir(null)

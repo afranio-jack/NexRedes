@@ -1951,3 +1951,63 @@ button.cadeia-item.clicavel:hover {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
+
+/* ---------- Ponto estruturado ligado à porta (aba Redes) ---------- */
+
+.ponto-ligado {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 10px 12px;
+  margin-bottom: 10px;
+  border: 1px solid #bfdbfe;
+  border-radius: 10px;
+  background: #eff6ff;
+}
+
+.ponto-ligado-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-size: 12.5px;
+  color: #1f2937;
+}
+
+.ponto-ligado-info svg {
+  color: #2563eb;
+  flex-shrink: 0;
+}
+
+.ponto-ligado-info strong {
+  font-size: 12.5px;
+}
+
+.ponto-ligado-data {
+  font-size: 11.5px;
+  color: #6b7280;
+}
+
+.btn-ver-ponto {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 10px;
+  border: 1px solid #2563eb;
+  border-radius: 8px;
+  background: #fff;
+  color: #2563eb;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.btn-ver-ponto:hover {
+  background: #2563eb;
+  color: #fff;
+}

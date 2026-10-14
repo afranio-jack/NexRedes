@@ -57,6 +57,7 @@ export function criarSala(dados) {
     ...normalizarItens(dados),
     id: criarId(),
     racks: [],
+    pontos: [],
     criadoEm: agora,
     atualizadoEm: agora,
   }
@@ -73,9 +74,11 @@ export function editarSala(id, dados) {
   const atualizada = {
     ...salas[indice],
     ...normalizarItens(dados),
-    // Racks são gerenciados apenas pela camada utils/racks.js:
-    // preservar o que já existe ao editar a sala pelo modal.
+    // Racks e pontos estruturados são gerenciados apenas pelas camadas
+    // utils/racks.js e utils/pontos.js: preservar o que já existe ao editar
+    // a sala pelo modal.
     racks: salas[indice].racks || [],
+    pontos: salas[indice].pontos || [],
     id,
     atualizadoEm: new Date().toISOString(),
   }

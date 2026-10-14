@@ -2,11 +2,15 @@ import { useEffect, useRef } from 'react'
 import './ConfirmDialog.css'
 
 // Diálogo pequeno de confirmação (descartar alterações, excluir sala etc.)
+// `extraLabel`/`onExtra` adicionam um terceiro botão opcional (ex.: excluir
+// um ponto mantendo o histórico de testes).
 export default function ConfirmDialog({
   titulo,
   texto,
   confirmarLabel = 'Confirmar',
   cancelarLabel = 'Cancelar',
+  extraLabel,
+  onExtra,
   perigo = false,
   onConfirmar,
   onCancelar,
@@ -52,6 +56,11 @@ export default function ConfirmDialog({
           >
             {cancelarLabel}
           </button>
+          {extraLabel && (
+            <button type="button" className="confirm-btn extra" onClick={onExtra}>
+              {extraLabel}
+            </button>
+          )}
           <button
             type="button"
             className={`confirm-btn ${perigo ? 'perigo' : 'primario'}`}

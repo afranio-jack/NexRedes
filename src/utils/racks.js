@@ -57,7 +57,8 @@ const ROTULO_ESTADO_CAMPO = {
 }
 
 // Acrescenta um registro no topo do histórico da porta (mais recente primeiro)
-function registrarHistorico(porta, textoRegistro) {
+// (também usada pela camada de pontos — utils/pontos.js)
+export function registrarHistorico(porta, textoRegistro) {
   const entrada = {
     id: criarIdItem('hist'),
     data: agoraISO(),
@@ -94,7 +95,7 @@ function criarPortaBase(numero, extra = {}) {
     nome: '',
     estado: 'ativa', // ativa | desativada | reservada
     dispositivoConectado: { tipo: '', nome: '', mac: '', ip: '' },
-    pontoRede: { identificacao: '', local: '' },
+    pontoRede: { pontoId: null, identificacao: '', local: '' },
     vinculo: null, // { equipamentoId, portaId, lado }
     categoriaCabo: '',
     comprimentoM: '',
@@ -888,10 +889,19 @@ export function salvarPorta(salaId, equipamentoId, portaId, dados) {
       mac: texto(dados.dispositivoConectado?.mac),
       ip: texto(dados.dispositivoConectado?.ip),
     },
-    pontoRede: {
-      identificacao: texto(dados.pontoRede?.identificacao),
-      local: texto(dados.pontoRede?.local),
-    },
+    pontoRede: (() => {
+      // Preserva o vínculo com o ponto estruturado (pontoId) quando o campo
+      // de identificação continua preenchido; limpa quando esvaziado.
+      const pontoIdAnterior = porta.pontoRede?.pontoId || null
+      const identificacao = texto(dados.pontoRede?.identificacao)
+      return {
+        pontoId: identificacao
+          ? (dados.pontoRede?.pontoId ?? pontoIdAnterior)
+          : null,
+        identificacao,
+        local: texto(dados.pontoRede?.local),
+      }
+    })(),
   })
 
   // 3. Sincroniza a categoria do cabo entre os dois lados do vínculo
@@ -1076,7 +1086,7 @@ export function liberarPorta(salaId, equipamentoId, portaId) {
   }
   porta.vinculo = null
   porta.dispositivoConectado = { tipo: '', nome: '', mac: '', ip: '' }
-  porta.pontoRede = { identificacao: '', local: '' }
+  porta.pontoRede = { pontoId: null, identificacao: '', local: '' }
   porta.uplink = { ativo: false, destino: '' }
   registrarHistorico(porta, 'Porta liberada')
   salvarSalas(salas)

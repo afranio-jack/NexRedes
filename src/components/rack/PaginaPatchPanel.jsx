@@ -10,6 +10,7 @@ import {
   PatchPanelIcon,
   SwitchIcon,
   NetworkIcon,
+  TagIcon,
 } from '../icons'
 import Trilha from './Trilha'
 import ResumoPortas from './ResumoPortas'
@@ -19,6 +20,7 @@ import FiltrosPortas from './FiltrosPortas'
 import TabelaPortasPP from './TabelaPortasPP'
 import PainelPorta from './PainelPorta'
 import { corDaSala } from '../../utils/salas'
+import { sincronizarPontoDaPorta } from '../../utils/pontos'
 import {
   calcularEstadoPorta,
   contarEstados,
@@ -52,6 +54,8 @@ export default function PaginaPatchPanel({
   onAbrirEquipamento,
   portaDestaqueId,
   onDestaqueConsumido,
+  onVerPonto,
+  onGerarEtiquetas,
 }) {
   const [filtro, setFiltro] = useState('todas')
   const [busca, setBusca] = useState('')
@@ -257,6 +261,9 @@ export default function PaginaPatchPanel({
 
   function aoSalvarIndividual(porta, dados) {
     salvarPorta(sala.id, equipamento.id, porta.id, dados)
+    // Se a porta perdeu o vínculo com um ponto estruturado, o ponto é
+    // atualizado (o lado correspondente fica "não definido")
+    sincronizarPontoDaPorta(sala.id, equipamento.id, porta.id)
     onDadosAlterados()
     fecharPainel(porta.id)
     onMostrarToast('Porta atualizada com sucesso')
@@ -286,6 +293,7 @@ export default function PaginaPatchPanel({
 
   function aoLiberar(porta) {
     liberarPorta(sala.id, equipamento.id, porta.id)
+    sincronizarPontoDaPorta(sala.id, equipamento.id, porta.id)
     onDadosAlterados()
     onMostrarToast('Porta liberada')
   }
@@ -386,6 +394,16 @@ export default function PaginaPatchPanel({
             Patch panel · {equipamento.quantidadePortas} portas ·{' '}
             {equipamento.categoriaCaboPadrao || '—'} · U{equipamento.posicaoU}
           </p>
+        </div>
+        <div className="rack-toolbar-acoes">
+          <button
+            type="button"
+            className="btn-equip btn-gerar-etiqueta"
+            onClick={() => onGerarEtiquetas?.(equipamento)}
+          >
+            <TagIcon size={16} />
+            Gerar etiqueta
+          </button>
         </div>
       </header>
 
@@ -525,6 +543,7 @@ export default function PaginaPatchPanel({
           onAbrirEquipamento={onAbrirEquipamento}
           onVoltarSala={onVoltarSala}
           onVoltarRack={onVoltarRack}
+          onVerPonto={onVerPonto}
         />
       )}
     </div>

@@ -1,0 +1,68 @@
+/* Página Configurações — seção "Etiquetas" */
+
+.configuracoes-bloco {
+  max-width: 760px;
+}
+
+.configuracoes-descricao {
+  margin: -6px 0 18px;
+  font-size: 13.5px;
+  color: #6b7280;
+}
+
+.configuracoes-prefixo {
+  max-width: 340px;
+}
+
+.configuracoes-modelos {
+  margin-top: 22px;
+}
+
+.configuracoes-modelos-topo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.configuracoes-modelos-topo h3 {
+  font-size: 14px;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.configuracoes-modelos-grade {
+  display: grid;
+  grid-template-columns: minmax(160px, 1fr) 130px 130px 44px;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.configuracoes-modelos-cabecalho {
+  font-size: 12px;
+  font-weight: 600;
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.configuracoes-modelos-acoes {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 16px;
+}
+
+.configuracoes-btn-excluir {
+  justify-self: center;
+}
+
+@media (max-width: 640px) {
+  .configuracoes-modelos-grade {
+    grid-template-columns: minmax(120px, 1fr) 90px 90px 44px;
+    gap: 8px;
+  }
+}

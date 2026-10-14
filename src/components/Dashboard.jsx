@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   NetworkIcon,
   SearchIcon,
@@ -17,6 +17,8 @@ import Toast from './Toast'
 import SalaModal from './sala/SalaModal'
 import SalaDetalhe from './sala/SalaDetalhe'
 import ConfirmDialog from './sala/ConfirmDialog'
+import Redes from './redes/Redes'
+import Configuracoes from './Configuracoes'
 import './Dashboard.css'
 import {
   listarSalas,
@@ -24,14 +26,23 @@ import {
   editarSala,
   excluirSala,
 } from '../utils/salas'
+import { analisarRota, navegar } from '../utils/rotas'
 
 const NAV_ITEMS = [
-  { id: 'projetos', label: 'Projetos', Icon: HomeIcon, active: true },
+  { id: 'projetos', label: 'Projetos', Icon: HomeIcon },
   { id: 'redes', label: 'Redes', Icon: NetworkIcon },
   { id: 'equipamentos', label: 'Equipamentos', Icon: ServerIcon },
   { id: 'relatorios', label: 'Relatórios', Icon: ChartIcon },
   { id: 'configuracoes', label: 'Configurações', Icon: GearIcon },
 ]
+
+// Itens da sidebar com página própria (Equipamentos e Relatórios continuam
+// sem página, como hoje)
+const VISTAS_NAVEGAVEIS = {
+  projetos: () => navegar('/'),
+  redes: () => navegar('/redes/pontos'),
+  configuracoes: () => navegar('/configuracoes'),
+}
 
 export default function Dashboard({ user, onLogout }) {
   const [salas, setSalas] = useState(() => listarSalas())
@@ -43,6 +54,22 @@ export default function Dashboard({ user, onLogout }) {
   const [salaParaExcluir, setSalaParaExcluir] = useState(null)
   const [toast, setToast] = useState(null)
   const [destaqueId, setDestaqueId] = useState(null)
+  // Roteamento mínimo: a vista vem da URL e o botão voltar/avançar funciona
+  const [rota, setRota] = useState(() => analisarRota() || { vista: 'projetos' })
+  // Foco transitório ao abrir a sala vindo da cadeia de um ponto
+  const [focoSala, setFocoSala] = useState(null) // { rackId, equipamentoId, portaId }
+  // Pré-seleção do gerador de etiquetas (vinda das páginas de equipamento)
+  const [presetEtiquetas, setPresetEtiquetas] = useState(null)
+
+  useEffect(() => {
+    function aoNavegar() {
+      setRota(analisarRota() || { vista: 'projetos' })
+    }
+    window.addEventListener('popstate', aoNavegar)
+    return () => window.removeEventListener('popstate', aoNavegar)
+  }, [])
+
+  const vista = rota.vista
 
   // A página da sala é derivada do id, então ela se atualiza após editar
   const salaAberta = salas.find((sala) => sala.id === salaAbertaId) || null
@@ -105,6 +132,52 @@ export default function Dashboard({ user, onLogout }) {
     setSalaParaExcluir(null)
   }
 
+  function recarregar() {
+    setSalas(listarSalas())
+  }
+
+  function irParaVista(idVista) {
+    // "Projetos" na sidebar sempre volta para a grade de salas
+    if (idVista === 'projetos') setSalaAbertaId(null)
+    VISTAS_NAVEGAVEIS[idVista]?.()
+  }
+
+  // Abre a página da sala, podendo já destacar um equipamento/porta
+  // (usado pelos links da cadeia de conexão do ponto)
+  function abrirSalaComFoco(salaId, { rackId, equipamentoId, portaId } = {}) {
+    setSalaAbertaId(salaId)
+    setFocoSala(
+      equipamentoId
+        ? { rackId, equipamentoId, portaId: portaId || null }
+        : null
+    )
+    navegar('/')
+  }
+
+  function abrirPonto(pontoId) {
+    navegar(`/redes/pontos/${encodeURIComponent(pontoId)}`)
+  }
+
+  // Botão "Gerar etiqueta" das páginas de switch/patch panel: abre a sub-aba
+  // Etiquetas já com o tipo e o equipamento pré-selecionados
+  function gerarEtiquetasDeEquipamento(sala, equipamento) {
+    setPresetEtiquetas({
+      tipo:
+        equipamento.tipo === 'switch'
+          ? 'portas_switch'
+          : 'portas_patch_panel',
+      salaId: sala.id,
+      equipamentoId: equipamento.id,
+    })
+    navegar('/redes/etiquetas')
+  }
+
+  // Botão "Gerar etiqueta" da página do ponto
+  function gerarEtiquetasDoPonto(pontoId) {
+    setPresetEtiquetas({ tipo: 'pontos', pontoId })
+    navegar('/redes/etiquetas')
+  }
+
   const termoBusca = busca.trim()
 
   return (
@@ -127,10 +200,12 @@ export default function Dashboard({ user, onLogout }) {
         </div>
 
         <div className="topbar-actions">
-          <button type="button" className="btn-new" onClick={abrirNovaSala}>
-            <PlusIcon size={16} />
-            Nova sala
-          </button>
+          {vista === 'projetos' && (
+            <button type="button" className="btn-new" onClick={abrirNovaSala}>
+              <PlusIcon size={16} />
+              Nova sala
+            </button>
+          )}
           <button type="button" className="bell-btn" aria-label="Notificações">
             <BellIcon size={20} />
             <span className="bell-dot" aria-hidden="true"></span>
@@ -187,8 +262,9 @@ export default function Dashboard({ user, onLogout }) {
             <button
               key={item.id}
               type="button"
-              className={`nav-item${item.active ? ' active' : ''}`}
-              aria-current={item.active ? 'page' : undefined}
+              className={`nav-item${vista === item.id ? ' active' : ''}`}
+              aria-current={vista === item.id ? 'page' : undefined}
+              onClick={() => irParaVista(item.id)}
             >
               <item.Icon size={20} />
               {item.label}
@@ -197,73 +273,98 @@ export default function Dashboard({ user, onLogout }) {
         </nav>
       </aside>
 
-      {salaAberta ? (
-        <SalaDetalhe
-          sala={salaAberta}
-          onVoltar={() => setSalaAbertaId(null)}
-          onEditar={() => setModal({ sala: salaAberta })}
-          onDadosAlterados={() => setSalas(listarSalas())}
+      {vista === 'redes' && (
+        <Redes
+          salas={salas}
+          subaba={rota.subaba || 'pontos'}
+          pontoId={rota.pontoId || null}
+          onDadosAlterados={recarregar}
+          onMostrarToast={setToast}
+          onAbrirSalaFoco={abrirSalaComFoco}
+          onGerarEtiquetasDoPonto={gerarEtiquetasDoPonto}
+          presetEtiquetas={presetEtiquetas}
+          onPresetConsumido={() => setPresetEtiquetas(null)}
         />
-      ) : (
-        <main className="dash-main">
-          <div className="main-header">
-            <div>
-              <h1>Projetos</h1>
-              <p>Gerencie seus ambientes de rede e mantenha tudo organizado.</p>
-            </div>
-            <div className="sort-select">
-              <SortIcon size={16} />
-              <select
-                aria-label="Ordenar projetos"
-                value={ordem}
-                onChange={(e) => setOrdem(e.target.value)}
-              >
-                <option value="az">Nome (A → Z)</option>
-                <option value="za">Nome (Z → A)</option>
-                <option value="machines">Mais máquinas</option>
-              </select>
-              <ChevronDownIcon size={16} className="sort-chevron" />
-            </div>
-          </div>
-
-          <div className="room-grid">
-            {salasVisiveis.map((sala) => (
-              <RoomCard
-                key={sala.id}
-                sala={sala}
-                destaque={destaqueId === sala.id}
-                onAcessar={(s) => setSalaAbertaId(s.id)}
-                onEditar={abrirEdicao}
-                onExcluir={setSalaParaExcluir}
-              />
-            ))}
-
-            {/* Cartão tracejado sempre como último item */}
-            <button type="button" className="card-create" onClick={abrirNovaSala}>
-              <span className="create-circle" aria-hidden="true">
-                <PlusIcon size={26} />
-              </span>
-              <h3>
-                {salas.length === 0
-                  ? 'Criar sua primeira sala'
-                  : 'Criar mais uma sala'}
-              </h3>
-              <p>
-                {salas.length === 0
-                  ? 'Cadastre um ambiente para começar a organizar sua rede.'
-                  : 'Adicione um novo ambiente para gerenciar sua rede.'}
-              </p>
-            </button>
-
-            {termoBusca !== '' && salasVisiveis.length === 0 && (
-              <div className="empty-state">
-                <SearchIcon size={28} />
-                <p>Nenhuma sala encontrada para “{termoBusca}”.</p>
-              </div>
-            )}
-          </div>
-        </main>
       )}
+
+      {vista === 'configuracoes' && (
+        <Configuracoes onMostrarToast={setToast} />
+      )}
+
+      {vista === 'projetos' &&
+        (salaAberta ? (
+          <SalaDetalhe
+            sala={salaAberta}
+            focoInicial={focoSala}
+            onFocoConsumido={() => setFocoSala(null)}
+            onVoltar={() => setSalaAbertaId(null)}
+            onEditar={() => setModal({ sala: salaAberta })}
+            onDadosAlterados={recarregar}
+            onVerPonto={abrirPonto}
+            onGerarEtiquetas={(equipamento) =>
+              gerarEtiquetasDeEquipamento(salaAberta, equipamento)
+            }
+          />
+        ) : (
+          <main className="dash-main">
+            <div className="main-header">
+              <div>
+                <h1>Projetos</h1>
+                <p>Gerencie seus ambientes de rede e mantenha tudo organizado.</p>
+              </div>
+              <div className="sort-select">
+                <SortIcon size={16} />
+                <select
+                  aria-label="Ordenar projetos"
+                  value={ordem}
+                  onChange={(e) => setOrdem(e.target.value)}
+                >
+                  <option value="az">Nome (A → Z)</option>
+                  <option value="za">Nome (Z → A)</option>
+                  <option value="machines">Mais máquinas</option>
+                </select>
+                <ChevronDownIcon size={16} className="sort-chevron" />
+              </div>
+            </div>
+
+            <div className="room-grid">
+              {salasVisiveis.map((sala) => (
+                <RoomCard
+                  key={sala.id}
+                  sala={sala}
+                  destaque={destaqueId === sala.id}
+                  onAcessar={(s) => setSalaAbertaId(s.id)}
+                  onEditar={abrirEdicao}
+                  onExcluir={setSalaParaExcluir}
+                />
+              ))}
+
+              {/* Cartão tracejado sempre como último item */}
+              <button type="button" className="card-create" onClick={abrirNovaSala}>
+                <span className="create-circle" aria-hidden="true">
+                  <PlusIcon size={26} />
+                </span>
+                <h3>
+                  {salas.length === 0
+                    ? 'Criar sua primeira sala'
+                    : 'Criar mais uma sala'}
+                </h3>
+                <p>
+                  {salas.length === 0
+                    ? 'Cadastre um ambiente para começar a organizar sua rede.'
+                    : 'Adicione um novo ambiente para gerenciar sua rede.'}
+                </p>
+              </button>
+
+              {termoBusca !== '' && salasVisiveis.length === 0 && (
+                <div className="empty-state">
+                  <SearchIcon size={28} />
+                  <p>Nenhuma sala encontrada para “{termoBusca}”.</p>
+                </div>
+              )}
+            </div>
+          </main>
+        ))}
 
       {modal && (
         <SalaModal

@@ -2,7 +2,7 @@
 // racks e equipamentos é controlada por estado interno (sem router), no mesmo
 // padrão do Dashboard (salaAbertaId).
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { ArrowLeftIcon, PencilIcon } from '../icons'
 import './SalaDetalhe.css'
 import {
@@ -27,9 +27,13 @@ const ABAS = [
 
 export default function SalaDetalhe({
   sala,
+  focoInicial = null,
+  onFocoConsumido,
   onVoltar,
   onEditar,
   onDadosAlterados,
+  onVerPonto,
+  onGerarEtiquetas,
 }) {
   const [aba, setAba] = useState('visao_geral')
   const [rackAbertoId, setRackAbertoId] = useState(null)
@@ -50,6 +54,23 @@ export default function SalaDetalhe({
           (item) => item.id === equipamentoAbertoId
         ) || null
       : null
+
+  // Abertura com foco vinda de fora (cadeia de conexão da página do ponto):
+  // já entra na página do equipamento, destacando a porta informada.
+  useEffect(() => {
+    if (!focoInicial) return
+    const { rackId, equipamentoId, portaId } = focoInicial
+    const equipamento = listarEquipamentos(sala).find(
+      (item) => item.id === equipamentoId && item.rackId === rackId
+    )
+    if (equipamento) {
+      setRackAbertoId(rackId)
+      setEquipamentoAbertoId(equipamentoId)
+      if (portaId) setPortaDestaqueId(portaId)
+    }
+    onFocoConsumido?.()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   function aoDadosAlterados() {
     onDadosAlterados?.()
@@ -131,6 +152,8 @@ export default function SalaDetalhe({
             onAbrirEquipamento={abrirEquipamento}
             portaDestaqueId={portaDestaqueId}
             onDestaqueConsumido={() => setPortaDestaqueId(null)}
+            onVerPonto={onVerPonto}
+            onGerarEtiquetas={onGerarEtiquetas}
           />
         ) : (
           <PaginaPatchPanel
@@ -145,6 +168,8 @@ export default function SalaDetalhe({
             onAbrirEquipamento={abrirEquipamento}
             portaDestaqueId={portaDestaqueId}
             onDestaqueConsumido={() => setPortaDestaqueId(null)}
+            onVerPonto={onVerPonto}
+            onGerarEtiquetas={onGerarEtiquetas}
           />
         )
       ) : rackAberto ? (

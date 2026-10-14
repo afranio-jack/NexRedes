@@ -78,3 +78,25 @@
 .confirm-btn.perigo:hover {
   background: #b91c1c;
 }
+
+/* Terceiro botão opcional (contorno neutro) */
+.confirm-btn.extra {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  color: #374151;
+}
+
+.confirm-btn.extra:hover {
+  border-color: #2563eb;
+  color: #2563eb;
+}
+
+@media (max-width: 480px) {
+  .confirm-botoes {
+    flex-wrap: wrap;
+  }
+
+  .confirm-btn {
+    flex: 1;
+  }
+}

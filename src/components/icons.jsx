@@ -425,3 +425,62 @@ export function ChevronLeftIcon({ size }) {
     </Svg>
   )
 }
+
+// --- Ícones do módulo Redes (pontos, testes e etiquetas) ---
+
+export function TagIcon({ size }) {
+  return (
+    <Svg size={size}>
+      <path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.702 8.702a2 2 0 0 0 2.828 0l6.34-6.34a2 2 0 0 0 0-2.828z" />
+      <circle cx="7.5" cy="7.5" r=".5" fill="currentColor" />
+    </Svg>
+  )
+}
+
+export function ClipboardCheckIcon({ size }) {
+  return (
+    <Svg size={size}>
+      <rect x="8" y="2" width="8" height="4" rx="1" />
+      <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+      <path d="m9 14 2 2 4-4" />
+    </Svg>
+  )
+}
+
+export function ClipboardListIcon({ size }) {
+  return (
+    <Svg size={size}>
+      <rect x="8" y="2" width="8" height="4" rx="1" />
+      <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+      <path d="M12 11h4" />
+      <path d="M12 16h4" />
+      <path d="M8 11h.01" />
+      <path d="M8 16h.01" />
+    </Svg>
+  )
+}
+
+export function DownloadIcon({ size }) {
+  return (
+    <Svg size={size}>
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+      <path d="m7 10 5 5 5-5" />
+      <path d="M12 15V3" />
+    </Svg>
+  )
+}
+
+export function QrCodeIcon({ size }) {
+  return (
+    <Svg size={size}>
+      <rect x="3" y="3" width="7" height="7" rx="1" />
+      <rect x="14" y="3" width="7" height="7" rx="1" />
+      <rect x="3" y="14" width="7" height="7" rx="1" />
+      <path d="M14 14h3v3h-3z" />
+      <path d="M21 14h.01" />
+      <path d="M14 21h.01" />
+      <path d="M17 17h4" />
+      <path d="M21 21h.01" />
+    </Svg>
+  )
+}

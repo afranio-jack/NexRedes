@@ -63,3 +63,34 @@ export function formatarDataInput(valor) {
   if (!ano || !mes || !dia) return '—'
   return `${dia}/${mes}/${ano}`
 }
+
+// ---------- <input type="datetime-local"> ----------
+
+function dataParaInputLocal(data) {
+  const ano = data.getFullYear()
+  const mes = String(data.getMonth() + 1).padStart(2, '0')
+  const dia = String(data.getDate()).padStart(2, '0')
+  const hora = String(data.getHours()).padStart(2, '0')
+  const minuto = String(data.getMinutes()).padStart(2, '0')
+  return `${ano}-${mes}-${dia}T${hora}:${minuto}`
+}
+
+// Valor para <input type="datetime-local"> com a data e hora atuais
+export function agoraLocalInput() {
+  return dataParaInputLocal(new Date())
+}
+
+// ISO completo → valor de <input type="datetime-local">
+export function isoParaInputLocal(iso) {
+  if (!iso) return ''
+  const data = new Date(iso)
+  return Number.isNaN(data.getTime()) ? '' : dataParaInputLocal(data)
+}
+
+// Valor de <input type="datetime-local"> → ISO completo
+export function inputParaISO(valor) {
+  const data = valor ? new Date(valor) : new Date()
+  return Number.isNaN(data.getTime())
+    ? new Date().toISOString()
+    : data.toISOString()
+}

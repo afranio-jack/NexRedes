@@ -16,6 +16,7 @@ import RackVista from './RackVista'
 import EquipamentoModal from './EquipamentoModal'
 import ConfirmDialog from '../sala/ConfirmDialog'
 import { corDaSala } from '../../utils/salas'
+import { aoExcluirEquipamento } from '../../utils/pontos'
 import {
   resumoRack,
   portaEmUso,
@@ -167,6 +168,8 @@ export default function RackDetalhe({
   function confirmarExclusao() {
     if (!equipParaExcluir) return
     excluirEquipamento(sala.id, rack.id, equipParaExcluir.id)
+    // Zera os lados dos pontos estruturados que usavam este equipamento
+    aoExcluirEquipamento(sala.id, equipParaExcluir.id)
     onDadosAlterados()
     onMostrarToast('Equipamento excluído')
     setEquipParaExcluir(null)
@@ -291,6 +294,11 @@ export default function RackDetalhe({
               sala,
               equipParaExcluir
             )
+            const pontosAfetados = (sala.pontos || []).filter(
+              (ponto) =>
+                ponto.patchPanelId === equipParaExcluir.id ||
+                ponto.switchId === equipParaExcluir.id
+            ).length
             const detalhes = []
             if (vinculos > 0)
               detalhes.push(
@@ -299,6 +307,10 @@ export default function RackDetalhe({
             if (falhas > 0)
               detalhes.push(
                 `${falhas} falha(s) em andamento será(ão) removida(s) da sala`
+              )
+            if (pontosAfetados > 0)
+              detalhes.push(
+                `${pontosAfetados} ponto(s) de rede ficará(ão) sem este lado da cadeia`
               )
             const aviso =
               detalhes.length > 0 ? ` Atenção: ${detalhes.join(' e ')}.` : ''

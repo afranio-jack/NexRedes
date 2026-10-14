@@ -50,6 +50,8 @@ import {
   listarPatchPanels,
   portasComuns,
 } from '../../utils/racks'
+import { pontoDoPainel } from '../../utils/pontos'
+import { ultimoTesteDe } from '../../utils/testes'
 import { formatarDataRelativa, formatarDataHora } from '../../utils/datas'
 import '../sala/SalaModal.css'
 import './rack.css'
@@ -204,6 +206,8 @@ function ResumoPorta({
   equipamento,
   porta,
   falhas,
+  pontoLigado,
+  testeDoPonto,
   hidden,
   onEditar,
   onConectar,
@@ -213,6 +217,7 @@ function ResumoPorta({
   onAbrirEquipamento,
   onVoltarSala,
   onVoltarRack,
+  onVerPonto,
   onFechar,
   ...rest
 }) {
@@ -443,6 +448,36 @@ function ResumoPorta({
       </Secao>
 
       <Secao titulo="Certificação">
+        {pontoLigado && (
+          <div className="ponto-ligado">
+            <div className="ponto-ligado-info">
+              <NetworkIcon size={14} />
+              <strong>{pontoLigado.identificacao}</strong>
+              <span
+                className={`selo-teste ${(
+                  testeDoPonto?.resultado || 'SEM_TESTE'
+                ).toLowerCase()}`}
+              >
+                {testeDoPonto ? testeDoPonto.resultado : 'Sem teste'}
+              </span>
+              {testeDoPonto && (
+                <span className="ponto-ligado-data">
+                  {formatarDataHora(testeDoPonto.dataHora)}
+                </span>
+              )}
+            </div>
+            {onVerPonto && (
+              <button
+                type="button"
+                className="btn-ver-ponto"
+                onClick={() => onVerPonto(pontoLigado.id)}
+              >
+                Ver ponto
+                <ArrowRightIcon size={14} />
+              </button>
+            )}
+          </div>
+        )}
         <div className="certificacao-linha">
           <span className={`selo-teste ${String(teste).toLowerCase()}`}>
             {rotuloTeste(teste)}
@@ -1153,6 +1188,7 @@ export default function PainelPorta({
   onAbrirEquipamento,
   onVoltarSala,
   onVoltarRack,
+  onVerPonto,
 }) {
   const painelRef = useRef(null)
   const [exibindo, setExibindo] = useState(portas)
@@ -1166,6 +1202,15 @@ export default function PainelPorta({
   const falhas = sala.falhas || []
   const portasFrente = exibindo.filter((p) => p.lado === 'frente')
   const portasVerso = exibindo.filter((p) => p.lado === 'verso')
+  // Ponto estruturado ligado a alguma porta do painel (e seu último teste)
+  const pontoLigado = useMemo(
+    () => pontoDoPainel(sala, exibindo),
+    [sala, exibindo]
+  )
+  const testeDoPonto = useMemo(
+    () => (pontoLigado ? ultimoTesteDe(pontoLigado.id) : null),
+    [pontoLigado]
+  )
   const temDoisLados =
     !lote &&
     equipamento.tipo === 'patch_panel' &&
@@ -1436,6 +1481,8 @@ export default function PainelPorta({
             equipamento={equipamento}
             porta={portaAtiva}
             falhas={falhas}
+            pontoLigado={pontoLigado}
+            testeDoPonto={testeDoPonto}
             hidden={aba !== 'resumo'}
             onEditar={() => setAba('editar')}
             onConectar={() => {
@@ -1454,6 +1501,7 @@ export default function PainelPorta({
             onAbrirEquipamento={onAbrirEquipamento}
             onVoltarSala={onVoltarSala}
             onVoltarRack={onVoltarRack}
+            onVerPonto={onVerPonto}
             onFechar={pedirParaFechar}
           />
         )}
