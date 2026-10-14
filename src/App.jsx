@@ -4,9 +4,13 @@ import Login from './components/Login'
 import ForgotPassword from './components/ForgotPassword'
 import Success from './components/Success'
 import Logo from './components/Logo'
+import NaoEncontrada from './components/NaoEncontrada'
 import Dashboard from './components/Dashboard'
 
 export default function App() {
+  const [rotaInexistente, setRotaInexistente] = useState(
+    () => window.location.pathname.replace(/\/+$/, '') !== ''
+  )
   const [view, setView] = useState('login')
   const [loggedUser, setLoggedUser] = useState(null)
   const [notice, setNotice] = useState('')
@@ -15,6 +19,24 @@ export default function App() {
     setLoggedUser(null)
     setNotice('')
     setView('login')
+  }
+
+  function voltarDaRotaInexistente() {
+    window.history.replaceState(null, '', '/')
+    setRotaInexistente(false)
+  }
+
+  if (rotaInexistente) {
+    return (
+      <div className="app">
+        <header className="app-header">
+          <Logo />
+        </header>
+        <div className="app-inner">
+          <NaoEncontrada onVoltar={voltarDaRotaInexistente} />
+        </div>
+      </div>
+    )
   }
 
   if (view === 'dashboard' && loggedUser) {

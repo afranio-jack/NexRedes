@@ -61,6 +61,8 @@ export default function PaginaPatchPanel({
   const faixaVersoRef = useRef(null)
   // painel = { portaIds: [...], lote, ladoInicial }
   const [painel, setPainel] = useState(null)
+  // Porta ativa dentro do painel (o destaque do painel visual a acompanha)
+  const [portaAtivaPainelId, setPortaAtivaPainelId] = useState(null)
 
   const falhas = sala.falhas || []
   const todasPortas = equipamento.portas || []
@@ -149,6 +151,7 @@ export default function PaginaPatchPanel({
     const porta = todasPortas.find((p) => p.id === portaDestaqueId)
     if (porta) {
       setPainel({ portaIds: [porta.id], lote: false, ladoInicial: porta.lado })
+      setPortaAtivaPainelId(porta.id)
     }
     onDestaqueConsumido?.()
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -179,9 +182,16 @@ export default function PaginaPatchPanel({
     )
   }
 
+  function abrirPainelPorta(porta) {
+    setPortaAtivaPainelId(porta.id)
+    setPainel({ portaIds: [porta.id], lote: false, ladoInicial: porta.lado })
+  }
+
   function abrirPainelLinha(linha) {
+    const portasDaLinha = portasDoNumero(linha.numero)
+    setPortaAtivaPainelId(portasDaLinha[0]?.id ?? null)
     setPainel({
-      portaIds: portasDoNumero(linha.numero).map((p) => p.id),
+      portaIds: portasDaLinha.map((p) => p.id),
       lote: false,
       ladoInicial: 'frente',
     })
@@ -204,16 +214,24 @@ export default function PaginaPatchPanel({
   }
 
   function aoTrocarPasso(indice, lado) {
+    const ids = passos[indice] || []
     setPainel((atual) =>
       atual
         ? {
             ...atual,
-            portaIds: passos[indice],
+            portaIds: ids,
             lote: false,
             ladoInicial: lado || atual.ladoInicial || 'frente',
           }
         : atual
     )
+    // Destaque imediato da porta ativa do novo passo (o painel confirma
+    // logo depois via onPortaAtivaChange)
+    const ladoAlvo = lado || painel?.ladoInicial || 'frente'
+    const novaAtiva = ids
+      .map((id) => todasPortas.find((p) => p.id === id))
+      .find((p) => p && p.lado === ladoAlvo)
+    setPortaAtivaPainelId(novaAtiva?.id || ids[0] || null)
   }
 
   function toggleNumero(numero) {
@@ -393,16 +411,12 @@ export default function PaginaPatchPanel({
           modo="patch_panel"
           falhas={falhas}
           selecionadaId={
-            painel && !painel.lote ? painel.portaIds[0] : null
+            painel && !painel.lote
+              ? portaAtivaPainelId || painel.portaIds[0]
+              : null
           }
           estadoFiltro={estadoFiltro}
-          onClicarPorta={(porta) =>
-            setPainel({
-              portaIds: [porta.id],
-              lote: false,
-              ladoInicial: porta.lado,
-            })
-          }
+          onClicarPorta={abrirPainelPorta}
           rotuloDaPorta={rotuloFrente}
           linhasDaPorta={linhasTooltipFrente}
           titulo={`Frente do patch panel ${equipamento.nome}`}
@@ -423,16 +437,12 @@ export default function PaginaPatchPanel({
           modo="patch_panel"
           falhas={falhas}
           selecionadaId={
-            painel && !painel.lote ? painel.portaIds[0] : null
+            painel && !painel.lote
+              ? portaAtivaPainelId || painel.portaIds[0]
+              : null
           }
           estadoFiltro={estadoFiltro}
-          onClicarPorta={(porta) =>
-            setPainel({
-              portaIds: [porta.id],
-              lote: false,
-              ladoInicial: porta.lado,
-            })
-          }
+          onClicarPorta={abrirPainelPorta}
           rotuloDaPorta={rotuloVerso}
           linhasDaPorta={linhasTooltipVerso}
           titulo={`Verso do patch panel ${equipamento.nome}`}
@@ -506,6 +516,7 @@ export default function PaginaPatchPanel({
           ladoInicial={painel.ladoInicial}
           onFechar={() => fecharPainel(painel.portaIds[0])}
           onTrocarPasso={aoTrocarPasso}
+          onPortaAtivaChange={setPortaAtivaPainelId}
           onSalvarIndividual={aoSalvarIndividual}
           onSalvarLote={aoSalvarLote}
           onRegistrarFalha={aoRegistrarFalha}

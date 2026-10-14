@@ -63,7 +63,7 @@ const OPCOES_DISPOSITIVO = [{ valor: '', label: 'Nenhum' }].concat(
   TIPOS_DISPOSITIVO.map((item) => ({ valor: item.id, label: item.label }))
 )
 
-function opcioneTeste() {
+function opcoesTeste() {
   return ULTIMOS_TESTES.map((item) => ({ valor: item.id, label: item.label }))
 }
 
@@ -956,7 +956,7 @@ function FormIndividual({
           chave={`p-${porta.id}-teste`}
           label="Resultado do último teste"
           valor={form.ultimoTeste}
-          opcoes={opicioneTeste()}
+          opcoes={opcoesTeste()}
           aoAlterar={(valor) => atualizar('ultimoTeste', valor)}
         />
         <p className="painel-nota">
@@ -985,7 +985,7 @@ function FormIndividual({
           Cancelar
         </button>
         <button type="submit" className="btn-modal primario">
-          Aplicar alterações
+          Salvar
         </button>
       </footer>
     </form>
@@ -1144,6 +1144,7 @@ export default function PainelPorta({
   ladoInicial = null,
   onFechar,
   onTrocarPasso,
+  onPortaAtivaChange,
   onSalvarIndividual,
   onSalvarLote,
   onRegistrarFalha,
@@ -1215,6 +1216,13 @@ export default function PainelPorta({
       setLadoAtivo(ladoInicial)
     }
   }, [ladoInicial, exibindo])
+
+  // Avisa a página qual porta está ativa no painel (destaque no painel
+  // visual acompanha a aba Frente/Verso e a navegação ‹ ›)
+  useEffect(() => {
+    if (!lote && portaAtiva) onPortaAtivaChange?.(portaAtiva.id)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [portaAtiva?.id, lote])
 
   // Foco no painel ao abrir; fundo não rola
   useEffect(() => {
@@ -1307,11 +1315,17 @@ export default function PainelPorta({
           ) : (
             <div className="painel-cabecalho-porta">
               <div className="painel-cabecalho-linha">
-                <h3 id="porta-painel-titulo">
-                  Porta {portaAtiva.numero}
-                  {portaAtiva.sfp ? ' (SFP)' : ''}
-                  {portaAtiva.lado ? ` · ${ROTULO_LADO[portaAtiva.lado]}` : ''}
-                </h3>
+                <div>
+                  <h3 id="porta-painel-titulo">
+                    Porta {portaAtiva.numero}
+                    {portaAtiva.sfp ? ' (SFP)' : ''}
+                    {portaAtiva.lado ? ` (${ROTULO_LADO[portaAtiva.lado]})` : ''}
+                  </h3>
+                  <p>
+                    {equipamento.tipo === 'switch' ? 'Switch' : 'Patch panel'} -{' '}
+                    {equipamento.nome}
+                  </p>
+                </div>
                 {podeNavegar && (
                   <div className="painel-nav">
                     <button

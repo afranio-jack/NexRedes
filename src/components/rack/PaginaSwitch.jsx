@@ -63,6 +63,8 @@ export default function PaginaSwitch({
   const faixaRef = useRef(null)
   // painel = { portaIds: [...], lote: bool, ladoInicial }
   const [painel, setPainel] = useState(null)
+  // Porta ativa dentro do painel (o destaque do painel visual a acompanha)
+  const [portaAtivaPainelId, setPortaAtivaPainelId] = useState(null)
 
   const falhas = sala.falhas || []
   const portas = equipamento.portas || []
@@ -120,6 +122,7 @@ export default function PaginaSwitch({
     const porta = portas.find((p) => p.id === portaDestaqueId)
     if (porta) {
       setPainel({ portaIds: [porta.id], lote: false, ladoInicial: porta.lado })
+      setPortaAtivaPainelId(porta.id)
     }
     onDestaqueConsumido?.()
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -134,6 +137,7 @@ export default function PaginaSwitch({
   }
 
   function abrirPainelPorta(porta) {
+    setPortaAtivaPainelId(porta.id)
     setPainel({ portaIds: [porta.id], lote: false, ladoInicial: porta.lado })
   }
 
@@ -155,6 +159,9 @@ export default function PaginaSwitch({
         ? { ...atual, portaIds: passos[indice], lote: false, ladoInicial: null }
         : atual
     )
+    // Destaque imediato da porta ativa do novo passo (o painel confirma
+    // logo depois via onPortaAtivaChange)
+    setPortaAtivaPainelId(passos[indice]?.[0] ?? null)
   }
 
   function toggleSelecao(portaId) {
@@ -329,7 +336,9 @@ export default function PaginaSwitch({
           modo="switch"
           falhas={falhas}
           selecionadaId={
-            painel && !painel.lote ? painel.portaIds[0] : null
+            painel && !painel.lote
+              ? portaAtivaPainelId || painel.portaIds[0]
+              : null
           }
           estadoFiltro={estadoFiltro}
           onClicarPorta={abrirPainelPorta}
@@ -405,6 +414,7 @@ export default function PaginaSwitch({
           ladoInicial={painel.ladoInicial}
           onFechar={() => fecharPainel(painel.portaIds[0])}
           onTrocarPasso={aoTrocarPasso}
+          onPortaAtivaChange={setPortaAtivaPainelId}
           onSalvarIndividual={aoSalvarIndividual}
           onSalvarLote={aoSalvarLote}
           onRegistrarFalha={aoRegistrarFalha}
