@@ -309,7 +309,7 @@ export default function Dashboard({ user, onLogout }) {
           <main className="dash-main">
             <div className="main-header">
               <div>
-                <h1>Projetos</h1>
+                <h1>Gerenciamento de Salas</h1>
                 <p>Gerencie seus ambientes de rede e mantenha tudo organizado.</p>
               </div>
               <div className="sort-select">
