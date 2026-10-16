@@ -1,9 +1,11 @@
 // Roteamento mínimo do app (sem biblioteca externa):
-// - "/"                 → Projetos (grade de salas)
+// - "/"                 → Salas (grade de salas)
 // - "/redes/pontos"     → aba Redes, sub-aba Pontos (padrão)
 // - "/redes/pontos/:id" → página do ponto de rede
 // - "/redes/testes"     → aba Redes, sub-aba Testes
 // - "/redes/etiquetas"  → aba Redes, sub-aba Etiquetas
+// - "/equipamentos"     → aba Equipamentos
+// - "/relatorios"       → aba Relatórios
 // - "/configuracoes"    → Configurações
 // A navegação usa history.pushState + um evento popstate próprio, então o
 // botão voltar/avançar do navegador e o refresh funcionam nas sub-abas.
@@ -13,6 +15,8 @@ export function analisarRota(caminho = window.location.pathname) {
   const limpo = caminho.replace(/\/+$/, '') || '/'
   if (limpo === '/') return { vista: 'projetos' }
   if (limpo === '/configuracoes') return { vista: 'configuracoes' }
+  if (limpo === '/equipamentos') return { vista: 'equipamentos' }
+  if (limpo === '/relatorios') return { vista: 'relatorios' }
   if (limpo === '/redes' || limpo === '/redes/pontos') {
     return { vista: 'redes', subaba: 'pontos', pontoId: null }
   }

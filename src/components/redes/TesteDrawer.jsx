@@ -19,6 +19,7 @@ import {
   isoParaInputLocal,
 } from '../../utils/datas'
 import { NORMAS, MAPAS_FIOS } from '../../utils/testes'
+import { obterConfig } from '../../utils/etiquetas'
 import '../sala/SalaModal.css'
 
 export default function TesteDrawer({
@@ -30,11 +31,14 @@ export default function TesteDrawer({
 }) {
   const drawerRef = useRef(null)
   const editando = Boolean(teste)
+  // Preferências de Configurações → Testes (responsáveis sugeridos, norma
+  // padrão e campos obrigatórios no registro)
+  const configTestes = obterConfig().testes
   const [form, setForm] = useState(() => ({
     pontoId: teste?.pontoId || pontoIdInicial || '',
     dataHora: teste ? isoParaInputLocal(teste.dataHora) : agoraLocalInput(),
     tecnico: teste?.tecnico || '',
-    norma: teste?.norma || NORMAS[0],
+    norma: teste?.norma || configTestes.normaPadrao || NORMAS[0],
     resultado: teste?.resultado || 'PASS',
     comprimentoM: teste?.medicoes?.comprimentoM || '',
     mapaFios: teste?.medicoes?.mapaFios || '',
@@ -84,6 +88,23 @@ export default function TesteDrawer({
     if (!form.pontoId) novosErros.pontoId = 'Escolha o ponto de rede.'
     if (!form.dataHora) novosErros.dataHora = 'Informe a data e a hora.'
     if (!form.tecnico.trim()) novosErros.tecnico = 'Informe o técnico responsável.'
+    // Campos obrigatórios marcados em Configurações → Testes
+    const obrigatorios = configTestes.camposObrigatorios || {}
+    if (obrigatorios.comprimentoM && !form.comprimentoM.trim()) {
+      novosErros.comprimentoM = 'Informe o comprimento (campo obrigatório).'
+    }
+    if (obrigatorios.mapaFios && !form.mapaFios) {
+      novosErros.mapaFios = 'Informe o mapa de fios (campo obrigatório).'
+    }
+    if (obrigatorios.atenuacao && !form.atenuacao.trim()) {
+      novosErros.atenuacao = 'Informe a atenuação (campo obrigatório).'
+    }
+    if (obrigatorios.next && !form.next.trim()) {
+      novosErros.next = 'Informe o NEXT (campo obrigatório).'
+    }
+    if (obrigatorios.perdaRetorno && !form.perdaRetorno.trim()) {
+      novosErros.perdaRetorno = 'Informe a perda de retorno (campo obrigatório).'
+    }
     if (form.resultado === 'FAIL' && !form.motivoFalha.trim()) {
       novosErros.motivoFalha = 'Descreva o motivo da falha.'
     }
@@ -212,7 +233,28 @@ export default function TesteDrawer({
               erro={erros.tecnico}
               valor={form.tecnico}
               aoAlterar={(valor) => atualizar('tecnico', valor)}
+              list="teste-responsaveis"
             />
+            {(configTestes.responsaveis || []).length > 0 && (
+              <datalist id="teste-responsaveis">
+                {configTestes.responsaveis.map((nome) => (
+                  <option key={nome} value={nome} />
+                ))}
+              </datalist>
+            )}
+            {(configTestes.criterios?.comprimentoMax ||
+              configTestes.criterios?.atenuacaoMax ||
+              configTestes.criterios?.perdaRetornoMax ||
+              configTestes.criterios?.nextMin) && (
+              <p className="painel-nota">
+                Critérios de referência (Configurações → Testes): comprimento
+                até {configTestes.criterios.comprimentoMax || '—'} m ·
+                atenuação até {configTestes.criterios.atenuacaoMax || '—'} dB ·
+                perda de retorno até{' '}
+                {configTestes.criterios.perdaRetornoMax || '—'} dB · NEXT
+                mínimo {configTestes.criterios.nextMin || '—'} dB.
+              </p>
+            )}
           </section>
 
           <section className="redes-drawer-secao">
@@ -253,6 +295,7 @@ export default function TesteDrawer({
                 min="0"
                 step="0.1"
                 placeholder="ex.: 45"
+                erro={erros.comprimentoM}
                 valor={form.comprimentoM}
                 aoAlterar={(valor) => atualizar('comprimentoM', valor)}
               />
@@ -260,6 +303,7 @@ export default function TesteDrawer({
                 chave="mapaFios"
                 label="Mapa de fios"
                 valor={form.mapaFios}
+                erro={erros.mapaFios}
                 opcoes={MAPAS_FIOS.map((item) => ({
                   valor: item.id,
                   label: item.label,
@@ -273,6 +317,7 @@ export default function TesteDrawer({
                 min="0"
                 step="0.1"
                 placeholder="ex.: 3.2"
+                erro={erros.atenuacao}
                 valor={form.atenuacao}
                 aoAlterar={(valor) => atualizar('atenuacao', valor)}
               />
@@ -283,6 +328,7 @@ export default function TesteDrawer({
                 min="0"
                 step="0.1"
                 placeholder="ex.: 45"
+                erro={erros.next}
                 valor={form.next}
                 aoAlterar={(valor) => atualizar('next', valor)}
               />
@@ -293,6 +339,7 @@ export default function TesteDrawer({
                 min="0"
                 step="0.1"
                 placeholder="ex.: 12"
+                erro={erros.perdaRetorno}
                 valor={form.perdaRetorno}
                 aoAlterar={(valor) => atualizar('perdaRetorno', valor)}
               />
@@ -336,7 +383,7 @@ export default function TesteDrawer({
               )}
               <p className="painel-nota">
                 <AlertTriangleIcon size={13} /> O registro aparece em
-                “Falhas e manutenção” da sala e muda o status dela em Projetos.
+                “Falhas e manutenção” da sala e muda o status dela em Salas.
               </p>
             </section>
           )}

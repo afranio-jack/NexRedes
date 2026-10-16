@@ -99,21 +99,147 @@ export function gradeDoModelo(modelo) {
 
 // ---------- Configuração geral ----------
 
+// Config padrão do app — merge profundo com o que estiver salvo, então novas
+// chaves sempre existem (telas nunca quebram com config antiga no storage).
+export const CONFIG_PADRAO = {
+  prefixoPadrao: 'CO-P',
+  organizacao: {
+    nomeEmpresa: '',
+    responsavel: '',
+    logo: '',
+    endereco: '',
+    fuso: 'America/Sao_Paulo',
+    idioma: 'pt-BR',
+    formatoData: 'dd/mm/aaaa',
+    formatoHora: '24h',
+    unidade: 'm',
+  },
+  nomenclatura: {
+    digitos: 2, // 2 → P01 · 3 → P001
+    prefixoPatchPanel: 'PP',
+    prefixoSwitch: 'SW',
+    prefixoRack: 'RACK',
+    prefixoSala: 'SALA',
+  },
+  etiquetas: {
+    conteudo: {
+      nomePonto: true,
+      patchPanel: false,
+      switchPorta: true,
+      qr: false,
+      logo: false,
+    },
+    tamanhoFonte: 9,
+    margens: 1,
+    modeloPadraoId: '',
+  },
+  rede: {
+    categoriasCabo: [
+      { id: 'cat5e', nome: 'Cat5e', cor: '#2563eb', comprimentoMax: '100' },
+      { id: 'cat6', nome: 'Cat6', cor: '#16a34a', comprimentoMax: '100' },
+      { id: 'cat6a', nome: 'Cat6A', cor: '#f59e0b', comprimentoMax: '100' },
+      { id: 'outro', nome: 'Outro', cor: '#6b7280', comprimentoMax: '' },
+    ],
+    categoriasPonto: [
+      { id: 'dados', nome: 'Dados', icone: 'plug', cor: '#2563eb' },
+      { id: 'voz', nome: 'Voz', icone: 'phone', cor: '#7c3aed' },
+      { id: 'wifi', nome: 'Wi-Fi', icone: 'wifi', cor: '#f59e0b' },
+      { id: 'camera', nome: 'Câmera', icone: 'camera', cor: '#ef4444' },
+      { id: 'impressora', nome: 'Impressora', icone: 'printer', cor: '#6b7280' },
+    ],
+    statusPonto: [
+      { id: 'operacional', nome: 'Operacional', cor: '#15803d' },
+      { id: 'atencao', nome: 'Atenção', cor: '#b45309' },
+      { id: 'critico', nome: 'Crítico', cor: '#b91c1c' },
+    ],
+    statusEquipamento: [
+      { id: 'operacao', nome: 'Em operação', cor: '#15803d' },
+      { id: 'manutencao', nome: 'Em manutenção', cor: '#b45309' },
+      { id: 'falha', nome: 'Com falha', cor: '#b91c1c' },
+    ],
+    faixasVlan: [],
+    portasPadraoPatchPanel: '24',
+    portasPadraoSwitch: '24',
+  },
+  equipamentos: {
+    tipos: [],
+    fabricantes: [],
+    avisoGarantiaDias: '30',
+    camposPersonalizados: [],
+  },
+  testes: {
+    criterios: {
+      comprimentoMax: '100',
+      atenuacaoMax: '',
+      perdaRetornoMax: '',
+      nextMin: '',
+    },
+    camposObrigatorios: {
+      comprimentoM: false,
+      mapaFios: false,
+      atenuacao: false,
+      next: false,
+      perdaRetorno: false,
+    },
+    responsaveis: [],
+    normaPadrao: 'TIA/EIA-568-C',
+  },
+  notificacoes: {
+    falhasNovas: true,
+    testesReprovados: true,
+    garantiaVencendo: true,
+    pontosSemTeste: true,
+    diasSemTeste: '30',
+    silenciar: false,
+  },
+  aparencia: {
+    tema: 'claro',
+    corDestaque: '',
+    tamanhoFonte: 'padrao',
+    densidade: 'confortavel',
+    telaInicial: 'salas',
+  },
+  conta: {
+    foto: '',
+  },
+}
+
+// Mescla o salvo por cima dos padrões (o salvo sempre vence)
+function mesclarConfig(padrao, salvo) {
+  if (Array.isArray(padrao)) return Array.isArray(salvo) ? salvo : padrao
+  if (padrao && typeof padrao === 'object') {
+    const saida = {}
+    for (const chave of Object.keys(padrao)) {
+      saida[chave] = mesclarConfig(
+        padrao[chave],
+        salvo && typeof salvo === 'object' ? salvo[chave] : undefined
+      )
+    }
+    for (const chave of Object.keys(salvo || {})) {
+      if (!(chave in saida)) saida[chave] = salvo[chave]
+    }
+    return saida
+  }
+  return salvo === undefined ? padrao : salvo
+}
+
 export function obterConfig() {
   migrarChaveLegada(CHAVE_CONFIG_LEGADA, CHAVE_CONFIG_BASE)
   const chave = chaveDeUsuario(CHAVE_CONFIG_BASE)
-  if (!chave) return { prefixoPadrao: 'CO-P' } // sem sessão: só padrões
+  if (!chave) return mesclarConfig(CONFIG_PADRAO, null) // sem sessão: só padrões
   try {
     const bruto = localStorage.getItem(chave)
     const config = bruto ? JSON.parse(bruto) : {}
-    if (!config || typeof config !== 'object') return { prefixoPadrao: 'CO-P' }
+    if (!config || typeof config !== 'object') {
+      return mesclarConfig(CONFIG_PADRAO, null)
+    }
     // Segunda camada: config de outro dono é ignorada (fail closed)
     if (config.usuario !== usuarioDaSessao()) {
-      return { prefixoPadrao: 'CO-P' }
+      return mesclarConfig(CONFIG_PADRAO, null)
     }
-    return { prefixoPadrao: 'CO-P', ...config }
+    return mesclarConfig(CONFIG_PADRAO, config)
   } catch {
-    return { prefixoPadrao: 'CO-P' }
+    return mesclarConfig(CONFIG_PADRAO, null)
   }
 }
 

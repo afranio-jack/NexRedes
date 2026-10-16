@@ -44,11 +44,25 @@ export default function Testes({
   const [salaFiltro, setSalaFiltro] = useState('todos')
   const [resultadoFiltro, setResultadoFiltro] = useState('todos')
   const [pontoFiltro, setPontoFiltro] = useState('todos')
+  const [tecnicoFiltro, setTecnicoFiltro] = useState('todos')
   const [ordenacao, setOrdenacao] = useState({
     chave: 'dataHora',
     direcao: -1,
   })
   const [testeParaExcluir, setTesteParaExcluir] = useState(null)
+
+  // Responsáveis que já registraram testes (filtro extra da coluna Técnico)
+  const tecnicos = useMemo(
+    () =>
+      [
+        ...new Set(
+          testes
+            .map((teste) => (teste.tecnico || '').trim())
+            .filter(Boolean)
+        ),
+      ].sort((a, b) => a.localeCompare(b, 'pt-BR')),
+    [testes]
+  )
 
   // Mapa pontoId → { ponto, sala } para preencher as linhas da tabela
   const pontosPorId = useMemo(() => {
@@ -94,6 +108,12 @@ export default function Testes({
       )
         return false
       if (pontoFiltro !== 'todos' && linha.teste.pontoId !== pontoFiltro) {
+        return false
+      }
+      if (
+        tecnicoFiltro !== 'todos' &&
+        (linha.teste.tecnico || '') !== tecnicoFiltro
+      ) {
         return false
       }
       if (termo) {
@@ -145,6 +165,7 @@ export default function Testes({
     salaFiltro,
     resultadoFiltro,
     pontoFiltro,
+    tecnicoFiltro,
     ordenacao,
   ])
 
@@ -174,6 +195,7 @@ export default function Testes({
     setSalaFiltro('todos')
     setResultadoFiltro('todos')
     setPontoFiltro('todos')
+    setTecnicoFiltro('todos')
   }
 
   function exportarCSV() {
@@ -209,7 +231,8 @@ export default function Testes({
     dataAte !== '' ||
     salaFiltro !== 'todos' ||
     resultadoFiltro !== 'todos' ||
-    pontoFiltro !== 'todos'
+    pontoFiltro !== 'todos' ||
+    tecnicoFiltro !== 'todos'
 
   return (
     <div className="redes-conteudo">
@@ -318,6 +341,20 @@ export default function Testes({
                 ))}
               </optgroup>
             ))}
+        </select>
+        <select
+          className="redes-select"
+          aria-label="Filtrar por responsável"
+          value={tecnicoFiltro}
+          onChange={(evento) => setTecnicoFiltro(evento.target.value)}
+          disabled={tecnicos.length === 0}
+        >
+          <option value="todos">Todos os responsáveis</option>
+          {tecnicos.map((tecnico) => (
+            <option key={tecnico} value={tecnico}>
+              {tecnico}
+            </option>
+          ))}
         </select>
         <button
           type="button"

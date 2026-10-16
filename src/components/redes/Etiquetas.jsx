@@ -31,8 +31,16 @@ const TIPOS_ETIQUETA = [
 const TAMANHOS_FONTE = [7, 8, 9, 10, 11, 12, 14]
 
 // Uma folha A4 com as etiquetas da página recebida (usada na prévia e na
-// impressão)
-function FolhaEtiquetas({ etiquetasDaPagina, modelo, orientacao, tamanhoFonte }) {
+// impressão). A margem vem da configuração (Configurações → Etiquetas) e o
+// logo da organização entra quando habilitado lá.
+function FolhaEtiquetas({
+  etiquetasDaPagina,
+  modelo,
+  orientacao,
+  tamanhoFonte,
+  margens = 1,
+  logo = '',
+}) {
   if (!modelo) return null
   return (
     <div className="etiquetas-folha">
@@ -46,19 +54,25 @@ function FolhaEtiquetas({ etiquetasDaPagina, modelo, orientacao, tamanhoFonte })
             width: `${modelo.largura}mm`,
             height: `${modelo.altura}mm`,
             fontSize: `${tamanhoFonte}px`,
+            padding: `${margens}mm ${margens * 1.5}mm`,
           }}
         >
           {etiqueta.linhas.length === 0 ? (
             <span className="etiqueta-linha vazio-etiqueta">—</span>
           ) : (
-            etiqueta.linhas.map((linha, i) => (
-              <span
-                key={i}
-                className={`etiqueta-linha${linha.destaque ? ' destaque' : ''}`}
-              >
-                {linha.texto}
-              </span>
-            ))
+            <>
+              {logo && (
+                <img src={logo} alt="" className="etiqueta-logo" />
+              )}
+              {etiqueta.linhas.map((linha, i) => (
+                <span
+                  key={i}
+                  className={`etiqueta-linha${linha.destaque ? ' destaque' : ''}`}
+                >
+                  {linha.texto}
+                </span>
+              ))}
+            </>
           )}
         </div>
       ))}
@@ -67,6 +81,9 @@ function FolhaEtiquetas({ etiquetasDaPagina, modelo, orientacao, tamanhoFonte })
 }
 
 export default function Etiquetas({ salas, preset, onPresetConsumido }) {
+  // Padrões vindos de Configurações (modelo padrão, conteúdo, fonte, margens
+  // e logo da organização) — o usuário ainda ajusta tudo aqui na hora de gerar
+  const [config] = useState(() => obterConfig())
   const [modelos] = useState(() => listarModelos())
   const [tipo, setTipo] = useState('pontos')
   const [salaId, setSalaId] = useState('')
@@ -75,23 +92,36 @@ export default function Etiquetas({ salas, preset, onPresetConsumido }) {
   const [intervaloDe, setIntervaloDe] = useState('')
   const [intervaloAte, setIntervaloAte] = useState('')
   const [selecionados, setSelecionados] = useState(() => new Set())
-  const [modeloId, setModeloId] = useState(() => listarModelos()[0]?.id || '')
-  const [conteudo, setConteudo] = useState({
-    identificacao: true,
+  const [modeloId, setModeloId] = useState(() => {
+    const idPadrao = config.etiquetas.modeloPadraoId
+    const lista = listarModelos()
+    return idPadrao && lista.some((item) => item.id === idPadrao)
+      ? idPadrao
+      : lista[0]?.id || ''
+  })
+  const [conteudo, setConteudo] = useState(() => ({
+    identificacao: config.etiquetas.conteudo.nomePonto,
     sala: true,
-    destino: true,
+    destino: config.etiquetas.conteudo.switchPorta,
+    patchPanel: config.etiquetas.conteudo.patchPanel,
     categoriaCabo: false,
     qr: false,
-  })
+    logo: config.etiquetas.conteudo.logo,
+  }))
   const [numeracao, setNumeracao] = useState(() => ({
     ativa: false,
-    prefixo: obterConfig().prefixoPadrao || 'CO-P',
+    prefixo: config.prefixoPadrao || 'CO-P',
     inicial: '1',
-    digitos: '2',
+    digitos: String(config.nomenclatura.digitos || 2),
   }))
   const [orientacao, setOrientacao] = useState('horizontal')
-  const [tamanhoFonte, setTamanhoFonte] = useState('9')
+  const [tamanhoFonte, setTamanhoFonte] = useState(
+    String(config.etiquetas.tamanhoFonte || 9)
+  )
   const [pagina, setPagina] = useState(0)
+  const margens = Number(config.etiquetas.margens) || 1
+  const logoHabilitado = conteudo.logo
+  const logo = logoHabilitado ? config.organizacao.logo || '' : ''
 
   const salaAtual = salas.find((sala) => sala.id === salaId) || null
   const racksDaSala = salaAtual?.racks || []
@@ -122,11 +152,21 @@ export default function Etiquetas({ salas, preset, onPresetConsumido }) {
             }
             return ''
           })()
+          const patchPanelTexto = (() => {
+            for (const rack of ponto.sala.racks || []) {
+              const achado = (rack.equipamentos || []).find(
+                (equipamento) => equipamento.id === ponto.patchPanelId
+              )
+              if (achado) return `${achado.nome} / porta ${ponto.portaPatchPanel}`
+            }
+            return ''
+          })()
           return {
             chave: ponto.id,
             titulo: ponto.identificacao,
             sala: ponto.sala.nome,
             destino: switchNome,
+            patchPanelTexto,
             categoria: ponto.categoriaCabo || '',
           }
         })
@@ -141,6 +181,7 @@ export default function Etiquetas({ salas, preset, onPresetConsumido }) {
             titulo: rack.nome,
             sala: sala.nome,
             destino: rack.localizacao || '',
+            patchPanelTexto: '',
             categoria: '',
           })
         }
@@ -185,6 +226,7 @@ export default function Etiquetas({ salas, preset, onPresetConsumido }) {
         titulo: `${equipamentoAtual.nome} / porta ${porta.numero}`,
         sala: salaAtual.nome,
         destino,
+        patchPanelTexto: '',
         categoria,
       }
     })
@@ -224,7 +266,9 @@ export default function Etiquetas({ salas, preset, onPresetConsumido }) {
       setSalaId('')
       setRackId('')
       setEquipamentoId('')
-      setSelecionados(new Set([preset.pontoId]))
+      // Pré-seleção de um ponto (página do ponto) ou de vários (lote da lista)
+      const ids = preset.pontoIds || (preset.pontoId ? [preset.pontoId] : [])
+      setSelecionados(new Set(ids))
     } else {
       setTipo(preset.tipo)
       const sala = salas.find((item) => item.id === preset.salaId) || null
@@ -280,6 +324,9 @@ export default function Etiquetas({ salas, preset, onPresetConsumido }) {
               ).padStart(Number(numeracao.digitos) || 1, '0')}`
             : item.titulo
           linhas.push({ texto, destaque: true })
+        }
+        if (conteudo.patchPanel && item.patchPanelTexto) {
+          linhas.push({ texto: item.patchPanelTexto })
         }
         if (conteudo.sala && item.sala) linhas.push({ texto: item.sala })
         if (conteudo.destino && item.destino) {
@@ -561,6 +608,19 @@ export default function Etiquetas({ salas, preset, onPresetConsumido }) {
           <label className="redes-check">
             <input
               type="checkbox"
+              checked={conteudo.patchPanel}
+              onChange={(evento) =>
+                setConteudo((atual) => ({
+                  ...atual,
+                  patchPanel: evento.target.checked,
+                }))
+              }
+            />
+            Patch panel / porta
+          </label>
+          <label className="redes-check">
+            <input
+              type="checkbox"
               checked={conteudo.destino}
               onChange={(evento) =>
                 setConteudo((atual) => ({
@@ -776,6 +836,8 @@ export default function Etiquetas({ salas, preset, onPresetConsumido }) {
               modelo={modelo}
               orientacao={orientacao}
               tamanhoFonte={tamanhoFonte}
+              margens={margens}
+              logo={logo}
             />
           </div>
         )}
@@ -790,6 +852,8 @@ export default function Etiquetas({ salas, preset, onPresetConsumido }) {
             modelo={modelo}
             orientacao={orientacao}
             tamanhoFonte={tamanhoFonte}
+            margens={margens}
+            logo={logo}
           />
         ))}
       </div>

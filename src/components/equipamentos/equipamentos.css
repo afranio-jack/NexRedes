@@ -1,0 +1,93 @@
+/* Página Equipamentos — inventário unificado (switches, patch panels,
+   racks e máquinas). Reusa as classes do módulo Redes (.redes-tabela,
+   .redes-filtros, .redes-resumo-*, .redes-subabas) importadas pelo
+   componente; aqui ficam os estilos próprios: selo de status e menu "⋮". */
+
+.redes-tr.nao-clicavel {
+  cursor: default;
+}
+
+/* ---------- Selo de status (dot colorido + rótulo) ---------- */
+
+.equip-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 4px 11px;
+  border-radius: 999px;
+  background: #f3f4f6;
+  color: #4b5563;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.equip-status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--status-cor, #6b7280);
+}
+
+.equip-status.neutro {
+  background: transparent;
+  color: #9ca3af;
+}
+
+/* ---------- Menu "⋮" da linha ---------- */
+
+.equip-menu-btn {
+  pointer-events: auto;
+}
+
+.equip-menu-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 190;
+  background: transparent;
+}
+
+.equip-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 200;
+  width: 160px;
+  padding: 8px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  box-shadow: 0 12px 32px rgba(17, 24, 39, 0.14);
+}
+
+/* Posição fixa (escapa do overflow-x da tabela) */
+.equip-menu-fixo {
+  position: fixed;
+}
+
+.equip-menu button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 9px 10px;
+  border: none;
+  border-radius: 8px;
+  background: none;
+  font: inherit;
+  font-size: 13.5px;
+  color: #374151;
+  cursor: pointer;
+}
+
+.equip-menu button:hover {
+  background: #f3f4f6;
+}
+
+.equip-menu button.perigo {
+  color: #dc2626;
+}
+
+.equip-menu button.perigo:hover {
+  background: #fef2f2;
+}

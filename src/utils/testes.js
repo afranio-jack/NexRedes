@@ -48,7 +48,9 @@ export function listarTestes() {
   }
 }
 
-function salvarTestes(testes) {
+// Grava a lista completa de testes (usada pela tela Configurações, no
+// restore do backup). Sem sessão: bloqueada (equivalente a 401).
+export function salvarTestes(testes) {
   const chave = chaveDeUsuario(CHAVE_BASE)
   if (!chave) throw new Error('Salvar testes exige usuário autenticado.')
   const usuario = usuarioDaSessao()

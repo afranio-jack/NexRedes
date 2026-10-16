@@ -127,11 +127,13 @@ export default function PontoModal({ salas, ponto, onFechar, onSalvar }) {
   // trocar de sala só atualiza se o usuário ainda não digitou nada
   useEffect(() => {
     if (editando || !salaAtual || identificacaoManual.current) return
+    const config = obterConfig()
     setForm((atual) => ({
       ...atual,
       identificacao: sugerirIdentificacao(
         salaAtual,
-        obterConfig().prefixoPadrao
+        config.prefixoPadrao,
+        config.nomenclatura.digitos
       ),
     }))
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -301,7 +303,7 @@ export default function PontoModal({ salas, ponto, onFechar, onSalvar }) {
         <form onSubmit={aoSubmeter} className="modal-corpo">
           {semSalas ? (
             <p className="lista-vazia">
-              Cadastre uma sala em Projetos antes de criar pontos de rede.
+              Cadastre uma sala em Salas antes de criar pontos de rede.
             </p>
           ) : (
             <>
@@ -380,7 +382,7 @@ export default function PontoModal({ salas, ponto, onFechar, onSalvar }) {
                 {patchPanels.length === 0 && (
                   <p className="painel-nota">
                     Nenhum patch panel nesta sala. Cadastre um na aba Racks da
-                    sala (Projetos).
+                    sala (Salas).
                   </p>
                 )}
               </section>
@@ -427,7 +429,7 @@ export default function PontoModal({ salas, ponto, onFechar, onSalvar }) {
                 {switches.length === 0 && (
                   <p className="painel-nota">
                     Nenhum switch nesta sala. Cadastre um na aba Racks da sala
-                    (Projetos).
+                    (Salas).
                   </p>
                 )}
               </section>

@@ -13,6 +13,7 @@ import {
 } from '../../utils/testes'
 import Pontos from './Pontos'
 import PontoDetalhe from './PontoDetalhe'
+import PainelPonto from './PainelPonto'
 import Testes from './Testes'
 import Etiquetas from './Etiquetas'
 import TesteDrawer from './TesteDrawer'
@@ -36,12 +37,15 @@ export default function Redes({
   onMostrarToast,
   onAbrirSalaFoco,
   onGerarEtiquetasDoPonto,
+  onGerarEtiquetasLote,
   presetEtiquetas,
   onPresetConsumido,
 }) {
   const [testes, setTestes] = useState(() => listarTestes())
   // drawer = null | { pontoId } | { teste } (edição)
   const [drawer, setDrawer] = useState(null)
+  // painel lateral do ponto (abre ao clicar numa linha/cartão da lista)
+  const [painelPontoId, setPainelPontoId] = useState(null)
 
   function atualizarTestes() {
     setTestes(listarTestes())
@@ -80,6 +84,17 @@ export default function Redes({
     atualizarTestes()
     onDadosAlterados?.()
     onMostrarToast?.('Teste excluído')
+  }
+
+  // Abre a sala (vindo de links do painel do ponto) fechando o painel antes
+  function abrirSalaFoco(salaId, foco) {
+    setPainelPontoId(null)
+    onAbrirSalaFoco?.(salaId, foco)
+  }
+
+  function gerarEtiquetasDoPonto(pontoId) {
+    setPainelPontoId(null)
+    onGerarEtiquetasDoPonto?.(pontoId)
   }
 
   return (
@@ -129,6 +144,8 @@ export default function Redes({
             onMostrarToast={onMostrarToast}
             onDadosAlterados={onDadosAlterados}
             onTestesAlterados={atualizarTestes}
+            onAbrirPainel={setPainelPontoId}
+            onGerarEtiquetasLote={onGerarEtiquetasLote}
           />
         ))}
 
@@ -151,6 +168,24 @@ export default function Redes({
         />
       )}
 
+      {painelPontoId && (
+        <PainelPonto
+          salas={salas}
+          testes={testes}
+          pontoId={painelPontoId}
+          onFechar={() => setPainelPontoId(null)}
+          onAbrirSalaFoco={abrirSalaFoco}
+          onRegistrarTeste={abrirDrawerNovoTeste}
+          onGerarEtiquetas={gerarEtiquetasDoPonto}
+          onEditarTeste={abrirDrawerEdicao}
+          onExcluirTeste={excluirTestePorId}
+          onMostrarToast={onMostrarToast}
+          onDadosAlterados={onDadosAlterados}
+        />
+      )}
+
+      {/* O drawer de teste fica por cima do painel do ponto (é aberto a
+          partir dele) */}
       {drawer && (
         <TesteDrawer
           salas={salas}

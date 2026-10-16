@@ -47,7 +47,13 @@ export default function App() {
   }
 
   if (view === 'dashboard' && loggedUser) {
-    return <Dashboard user={loggedUser} onLogout={handleLogout} />
+    return (
+      <Dashboard
+        user={loggedUser}
+        onLogout={handleLogout}
+        onUsuarioAlterado={(usuarioAtualizado) => setLoggedUser(usuarioAtualizado)}
+      />
+    )
   }
 
   return (

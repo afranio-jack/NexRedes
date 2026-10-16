@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from 'react'
 import {
   NetworkIcon,
   SearchIcon,
-  BellIcon,
   ChevronDownIcon,
   HomeIcon,
   ServerIcon,
@@ -18,8 +17,13 @@ import SalaModal from './sala/SalaModal'
 import SalaDetalhe from './sala/SalaDetalhe'
 import ConfirmDialog from './sala/ConfirmDialog'
 import Redes from './redes/Redes'
+import Equipamentos from './equipamentos/Equipamentos'
+import Relatorios from './relatorios/Relatorios'
 import Configuracoes from './Configuracoes'
+import Notificacoes from './Notificacoes'
 import './Dashboard.css'
+import './Notificacoes.css'
+import './aparencia.css'
 import {
   listarSalas,
   criarSala,
@@ -27,25 +31,30 @@ import {
   excluirSala,
 } from '../utils/salas'
 import { analisarRota, navegar } from '../utils/rotas'
+import { obterConfig, salvarConfig } from '../utils/etiquetas'
+import { listarTestes } from '../utils/testes'
 
 const NAV_ITEMS = [
-  { id: 'projetos', label: 'Projetos', Icon: HomeIcon },
+  { id: 'projetos', label: 'Salas', Icon: HomeIcon },
   { id: 'redes', label: 'Redes', Icon: NetworkIcon },
   { id: 'equipamentos', label: 'Equipamentos', Icon: ServerIcon },
   { id: 'relatorios', label: 'Relatórios', Icon: ChartIcon },
   { id: 'configuracoes', label: 'Configurações', Icon: GearIcon },
 ]
 
-// Itens da sidebar com página própria (Equipamentos e Relatórios continuam
-// sem página, como hoje)
+// Itens da sidebar com página própria
 const VISTAS_NAVEGAVEIS = {
   projetos: () => navegar('/'),
   redes: () => navegar('/redes/pontos'),
+  equipamentos: () => navegar('/equipamentos'),
+  relatorios: () => navegar('/relatorios'),
   configuracoes: () => navegar('/configuracoes'),
 }
 
-export default function Dashboard({ user, onLogout }) {
+export default function Dashboard({ user, onLogout, onUsuarioAlterado }) {
   const [salas, setSalas] = useState(() => listarSalas())
+  const [config, setConfig] = useState(() => obterConfig())
+  const [testes, setTestes] = useState(() => listarTestes())
   const [busca, setBusca] = useState('')
   const [ordem, setOrdem] = useState('az')
   const [menuAberto, setMenuAberto] = useState(false)
@@ -56,9 +65,11 @@ export default function Dashboard({ user, onLogout }) {
   const [destaqueId, setDestaqueId] = useState(null)
   // Roteamento mínimo: a vista vem da URL e o botão voltar/avançar funciona
   const [rota, setRota] = useState(() => analisarRota() || { vista: 'projetos' })
-  // Foco transitório ao abrir a sala vindo da cadeia de um ponto
+  // Foco transitório ao abrir a sala vindo da cadeia de um ponto ou da tela
+  // Equipamentos ({ rackId } abre o rack; + equipamentoId/portaId vai além)
   const [focoSala, setFocoSala] = useState(null) // { rackId, equipamentoId, portaId }
-  // Pré-seleção do gerador de etiquetas (vinda das páginas de equipamento)
+  // Pré-seleção do gerador de etiquetas (vinda das páginas de equipamento,
+  // da página/lote de pontos)
   const [presetEtiquetas, setPresetEtiquetas] = useState(null)
 
   useEffect(() => {
@@ -70,6 +81,49 @@ export default function Dashboard({ user, onLogout }) {
   }, [])
 
   const vista = rota.vista
+
+  // Tela inicial ao entrar (Configurações → Aparência): aplicada quando o
+  // app abre na raiz; depois a URL é soberana (voltar/avançar funcionam).
+  useEffect(() => {
+    if (window.location.pathname !== '/') return
+    const destino = {
+      redes: '/redes/pontos',
+      relatorios: '/relatorios',
+    }[config.aparencia.telaInicial]
+    if (destino) navegar(destino)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // Aparência (tema claro/escuro/automático, cor de destaque, tamanho da
+  // fonte e densidade) aplicada no <html> conforme a configuração salva
+  useEffect(() => {
+    const { tema, corDestaque, tamanhoFonte, densidade } = config.aparencia
+    const escuroPreferido = window.matchMedia(
+      '(prefers-color-scheme: dark)'
+    ).matches
+    const escuro = tema === 'escuro' || (tema === 'auto' && escuroPreferido)
+    const raiz = document.documentElement
+    raiz.classList.toggle('tema-escuro', escuro)
+    raiz.style.setProperty('--acento', corDestaque || '')
+    raiz.classList.toggle('fonte-pequena', tamanhoFonte === 'pequena')
+    raiz.classList.toggle('fonte-grande', tamanhoFonte === 'grande')
+    raiz.classList.toggle('densidade-compacta', densidade === 'compacta')
+  }, [config.aparencia])
+
+  // "Automático" reage à mudança de tema do sistema
+  useEffect(() => {
+    const consulta = window.matchMedia('(prefers-color-scheme: dark)')
+    function aoMudarTema() {
+      if (obterConfig().aparencia.tema === 'auto') {
+        document.documentElement.classList.toggle(
+          'tema-escuro',
+          consulta.matches
+        )
+      }
+    }
+    consulta.addEventListener('change', aoMudarTema)
+    return () => consulta.removeEventListener('change', aoMudarTema)
+  }, [])
 
   // A página da sala é derivada do id, então ela se atualiza após editar
   const salaAberta = salas.find((sala) => sala.id === salaAbertaId) || null
@@ -127,29 +181,33 @@ export default function Dashboard({ user, onLogout }) {
   function confirmarExclusao() {
     if (!salaParaExcluir) return
     excluirSala(salaParaExcluir.id)
-    setSalas(listarSalas())
+    recarregar()
     if (salaAbertaId === salaParaExcluir.id) setSalaAbertaId(null)
     setSalaParaExcluir(null)
   }
 
   function recarregar() {
     setSalas(listarSalas())
+    setConfig(obterConfig())
+    setTestes(listarTestes())
   }
 
   function irParaVista(idVista) {
-    // "Projetos" na sidebar sempre volta para a grade de salas
+    // "Salas" na sidebar sempre volta para a grade de salas
     if (idVista === 'projetos') setSalaAbertaId(null)
     VISTAS_NAVEGAVEIS[idVista]?.()
   }
 
-  // Abre a página da sala, podendo já destacar um equipamento/porta
-  // (usado pelos links da cadeia de conexão do ponto)
+  // Abre a página da sala, podendo já destacar um rack, equipamento ou porta
+  // (usado pelos links da cadeia de conexão do ponto e pela tela Equipamentos)
   function abrirSalaComFoco(salaId, { rackId, equipamentoId, portaId } = {}) {
     setSalaAbertaId(salaId)
     setFocoSala(
       equipamentoId
         ? { rackId, equipamentoId, portaId: portaId || null }
-        : null
+        : rackId
+          ? { rackId, equipamentoId: null, portaId: null }
+          : null
     )
     navegar('/')
   }
@@ -172,13 +230,45 @@ export default function Dashboard({ user, onLogout }) {
     navegar('/redes/etiquetas')
   }
 
-  // Botão "Gerar etiqueta" da página do ponto
+  // Botão "Gerar etiqueta" da página do ponto (um) e da seleção em lote
   function gerarEtiquetasDoPonto(pontoId) {
     setPresetEtiquetas({ tipo: 'pontos', pontoId })
     navegar('/redes/etiquetas')
   }
 
+  function gerarEtiquetasDePontos(pontoIds) {
+    setPresetEtiquetas({ tipo: 'pontos', pontoIds })
+    navegar('/redes/etiquetas')
+  }
+
+  // Clique numa notificação do sino → navega até o alvo
+  function abrirDestinoNotificacao(destino) {
+    if (!destino) return
+    if (destino.tipo === 'sala') {
+      abrirSalaComFoco(destino.salaId)
+    } else if (destino.tipo === 'ponto') {
+      abrirPonto(destino.pontoId)
+    } else if (destino.tipo === 'equipamentos') {
+      navegar('/equipamentos')
+    }
+  }
+
+  // Alternância rápida do "silenciar" do sino (Configurações → Notificações)
+  function alternarSilenciarNotificacoes() {
+    const atual = obterConfig()
+    salvarConfig({
+      ...atual,
+      notificacoes: {
+        ...atual.notificacoes,
+        silenciar: !atual.notificacoes.silenciar,
+      },
+    })
+    setConfig(obterConfig())
+  }
+
   const termoBusca = busca.trim()
+  const inicial = (user.name || user.username || 'U').charAt(0).toUpperCase()
+  const fotoPerfil = config.conta.foto || ''
 
   return (
     <div className="dash">
@@ -206,10 +296,13 @@ export default function Dashboard({ user, onLogout }) {
               Nova sala
             </button>
           )}
-          <button type="button" className="bell-btn" aria-label="Notificações">
-            <BellIcon size={20} />
-            <span className="bell-dot" aria-hidden="true"></span>
-          </button>
+          <Notificacoes
+            salas={salas}
+            testes={testes}
+            config={config}
+            onAbrirDestino={abrirDestinoNotificacao}
+            onSilenciar={alternarSilenciarNotificacoes}
+          />
           <div className="avatar-wrap">
             <button
               type="button"
@@ -219,7 +312,11 @@ export default function Dashboard({ user, onLogout }) {
               onClick={() => setMenuAberto((open) => !open)}
             >
               <span className="avatar-circle" aria-hidden="true">
-                A
+                {fotoPerfil ? (
+                  <img src={fotoPerfil} alt="" />
+                ) : (
+                  inicial
+                )}
               </span>
               <ChevronDownIcon size={16} />
             </button>
@@ -232,7 +329,11 @@ export default function Dashboard({ user, onLogout }) {
                 <div className="avatar-menu" role="menu">
                   <div className="menu-user">
                     <span className="avatar-circle" aria-hidden="true">
-                      A
+                      {fotoPerfil ? (
+                        <img src={fotoPerfil} alt="" />
+                      ) : (
+                        inicial
+                      )}
                     </span>
                     <span className="menu-user-info">
                       <span className="menu-user-name">{user.name}</span>
@@ -240,6 +341,18 @@ export default function Dashboard({ user, onLogout }) {
                     </span>
                   </div>
                   <div className="menu-divider"></div>
+                  <button
+                    type="button"
+                    className="menu-item"
+                    role="menuitem"
+                    onClick={() => {
+                      setMenuAberto(false)
+                      navegar('/configuracoes')
+                    }}
+                  >
+                    <GearIcon size={16} />
+                    Configurações
+                  </button>
                   <button
                     type="button"
                     className="menu-item danger"
@@ -282,13 +395,35 @@ export default function Dashboard({ user, onLogout }) {
           onMostrarToast={setToast}
           onAbrirSalaFoco={abrirSalaComFoco}
           onGerarEtiquetasDoPonto={gerarEtiquetasDoPonto}
+          onGerarEtiquetasLote={gerarEtiquetasDePontos}
           presetEtiquetas={presetEtiquetas}
           onPresetConsumido={() => setPresetEtiquetas(null)}
         />
       )}
 
+      {vista === 'equipamentos' && (
+        <Equipamentos
+          salas={salas}
+          onDadosAlterados={recarregar}
+          onMostrarToast={setToast}
+          onAbrirSalaFoco={abrirSalaComFoco}
+        />
+      )}
+
+      {vista === 'relatorios' && (
+        <Relatorios salas={salas} onMostrarToast={setToast} />
+      )}
+
       {vista === 'configuracoes' && (
-        <Configuracoes onMostrarToast={setToast} />
+        <Configuracoes
+          user={user}
+          salas={salas}
+          onLogout={onLogout}
+          onMostrarToast={setToast}
+          onUsuarioAlterado={onUsuarioAlterado}
+          onDadosAlterados={recarregar}
+          onConfigAlterado={() => setConfig(obterConfig())}
+        />
       )}
 
       {vista === 'projetos' &&

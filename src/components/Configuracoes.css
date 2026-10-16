@@ -1,4 +1,7 @@
-/* Página Configurações — seção "Etiquetas" */
+/* Página Configurações — sub-abas e estilos das seções (Geral, Rede,
+   Etiquetas, Equipamentos, Testes, Notificações, Aparência, Dados, Conta,
+   Sobre). O cartão "Etiquetas" original continua com as classes
+   .configuracoes-modelos-*, preservadas abaixo. */
 
 .configuracoes-bloco {
   max-width: 760px;
@@ -9,6 +12,36 @@
   font-size: 13.5px;
   color: #6b7280;
 }
+
+.configuracoes-conteudo {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+/* ---------- Subtítulos dentro de um cartão ---------- */
+
+.configuracoes-subtitulo {
+  margin: 18px 0 10px;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #374151;
+}
+
+/* ---------- Rodapé com "Salvar alterações" ---------- */
+
+.configuracoes-rodape-secao {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 18px;
+}
+
+.configuracoes-rodape-secao .btn-new:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ---------- Cartão "Etiquetas" original (preservado) ---------- */
 
 .configuracoes-prefixo {
   max-width: 340px;
@@ -65,4 +98,362 @@
     grid-template-columns: minmax(120px, 1fr) 90px 90px 44px;
     gap: 8px;
   }
+}
+
+/* ---------- Pré-visualização de nomenclatura ---------- */
+
+.configuracoes-previa {
+  margin: 14px 0 0;
+  padding: 10px 14px;
+  background: #f9fafb;
+  border: 1px dashed #e5e7eb;
+  border-radius: 10px;
+  font-size: 13.5px;
+  color: #4b5563;
+}
+
+.configuracoes-previa strong {
+  color: #2563eb;
+  font-weight: 800;
+}
+
+/* ---------- Checkboxes agrupados ---------- */
+
+.configuracoes-checks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-bottom: 6px;
+}
+
+.configuracoes-checks-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.configuracoes-check-item strong {
+  display: block;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.configuracoes-check-descricao {
+  display: block;
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+.configuracoes-nota-campo {
+  max-width: 320px;
+  margin-left: 26px;
+}
+
+/* ---------- Listas editáveis (Rede, Equipamentos, Testes) ---------- */
+
+.configuracoes-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.configuracoes-lista-grade {
+  display: grid;
+  gap: 10px;
+  align-items: center;
+}
+
+.configuracoes-lista-cabecalho {
+  font-size: 12px;
+  font-weight: 600;
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.configuracoes-lista-vazio {
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px dashed #e5e7eb;
+  border-radius: 10px;
+  font-size: 13px;
+  color: #9ca3af;
+}
+
+.configuracoes-lista .campo-cor {
+  padding: 3px;
+  height: 38px;
+  cursor: pointer;
+}
+
+.configuracoes-lista .redes-filtro-btn {
+  align-self: flex-start;
+  margin-top: 4px;
+}
+
+/* ---------- Logo e foto ---------- */
+
+.configuracoes-logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.configuracoes-logo img {
+  max-height: 64px;
+  max-width: 220px;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 6px;
+  background: #fff;
+}
+
+.configuracoes-logo-nota {
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+.configuracoes-foto-wrap {
+  position: relative;
+}
+
+.configuracoes-foto {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #e5e7eb;
+}
+
+.configuracoes-foto-wrap .redes-btn-acao {
+  position: absolute;
+  right: -4px;
+  bottom: -4px;
+  width: 28px;
+  height: 28px;
+}
+
+.configuracoes-foto-vazia {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 72px;
+  height: 72px;
+  border: 2px dashed #d1d5db;
+  border-radius: 50%;
+  background: #f9fafb;
+  color: #9ca3af;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.configuracoes-foto-vazia:hover {
+  border-color: #2563eb;
+  color: #2563eb;
+}
+
+/* ---------- Conta ---------- */
+
+.configuracoes-conta-topo {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.configuracoes-conta-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.configuracoes-conta-info strong {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.configuracoes-conta-info span {
+  font-size: 12.5px;
+  color: #6b7280;
+}
+
+/* ---------- Cor de destaque ---------- */
+
+.configuracoes-cor {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.configuracoes-cor .campo-cor {
+  width: 64px;
+  height: 42px;
+  padding: 4px;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  background: #fff;
+  cursor: pointer;
+}
+
+/* ---------- Ações (botões em linha) ---------- */
+
+.configuracoes-acoes {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* ---------- Resultado da importação ---------- */
+
+.configuracoes-resultado {
+  margin-top: 14px;
+  padding: 12px 14px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+}
+
+.configuracoes-resultado p {
+  margin: 0 0 6px;
+  font-size: 13.5px;
+  color: #1f2937;
+}
+
+.configuracoes-resultado ul {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 12.5px;
+  color: #b45309;
+}
+
+/* ---------- Zona de perigo ---------- */
+
+.configuracoes-perigo {
+  border-color: #fecaca;
+}
+
+.configuracoes-perigo h2 {
+  color: #b91c1c;
+}
+
+.configuracoes-perigo h2 svg {
+  color: #b91c1c;
+}
+
+.configuracoes-perigo-form {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.configuracoes-perigo-form .campo {
+  flex: 1;
+  min-width: 240px;
+  margin: 0;
+}
+
+.configuracoes-perigo-form .campo span {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.configuracoes-btn-perigo {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 42px;
+  padding: 0 16px;
+  border: none;
+  border-radius: 10px;
+  background: #dc2626;
+  color: #fff;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.configuracoes-btn-perigo:hover {
+  background: #b91c1c;
+}
+
+.configuracoes-btn-perigo:disabled {
+  background: #f3f4f6;
+  color: #9ca3af;
+  cursor: not-allowed;
+}
+
+/* ---------- Sobre ---------- */
+
+.configuracoes-sobre-versao {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 14px;
+  background: #f9fafb;
+  border-radius: 10px;
+}
+
+.configuracoes-sobre-versao strong {
+  font-size: 15px;
+  color: #1f2937;
+}
+
+.configuracoes-sobre-versao span {
+  font-size: 12.5px;
+  color: #6b7280;
+}
+
+.configuracoes-atalhos {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.configuracoes-atalhos li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 13.5px;
+  color: #374151;
+}
+
+.configuracoes-atalhos kbd {
+  min-width: 96px;
+  padding: 5px 10px;
+  background: #f3f4f6;
+  border: 1px solid #e5e7eb;
+  border-bottom-width: 2px;
+  border-radius: 7px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  color: #374151;
+  text-align: center;
+}
+
+.configuracoes-ajuda {
+  margin: 0;
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  font-size: 13.5px;
+  color: #374151;
+}
+
+.configuracoes-ajuda strong {
+  color: #1f2937;
 }

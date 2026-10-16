@@ -296,7 +296,7 @@ export default function PaginaSwitch({
         </button>
         <Trilha
           itens={[
-            { label: 'Projetos', onClick: onVoltarProjetos },
+            { label: 'Salas', onClick: onVoltarProjetos },
             { label: sala.nome, onClick: onVoltarSala },
             { label: rack.nome, onClick: onVoltarRack },
             { label: equipamento.nome },

@@ -1,0 +1,201 @@
+/* Aparência aplicada pela Configurações → Aparência.
+   O Dashboard liga/desliga classes no <html> conforme a configuração salva:
+   - tema escuro: casca escura (topbar, sidebar e fundo) com cartões claros;
+   - cor de destaque: variável --acento (vazia = cores padrão do app);
+   - tamanho da fonte: zoom leve em .dash;
+   - densidade compacta: respiros menores em tabelas e cartões. */
+
+/* ---------- Foto de perfil no avatar ---------- */
+
+.avatar-circle img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
+}
+
+/* ---------- Cor de destaque (vazia = padrão) ---------- */
+
+.btn-new,
+.room-access,
+.configuracoes-btn-perigo {
+  background: var(--acento, #7c3aed);
+}
+
+.btn-new:hover,
+.room-access:hover {
+  background: color-mix(in srgb, var(--acento, #7c3aed) 85%, #000);
+}
+
+.nav-item.active {
+  background: color-mix(in srgb, var(--acento, #2563eb) 12%, #fff);
+  color: var(--acento, #2563eb);
+}
+
+.redes-subaba.ativa,
+.detalhe-aba.ativa,
+.redes-vista-toggle button.ativo,
+.etiquetas-orientacao button.ativo {
+  color: var(--acento, #2563eb);
+}
+
+.redes-subaba.ativa {
+  border-bottom-color: var(--acento, #2563eb);
+}
+
+.detalhe-aba.ativa,
+.redes-vista-toggle button.ativo,
+.etiquetas-orientacao button.ativo {
+  background: color-mix(in srgb, var(--acento, #2563eb) 12%, #fff);
+}
+
+.create-circle {
+  background: var(--acento, #2563eb);
+}
+
+/* ---------- Tamanho da fonte ---------- */
+
+html.fonte-pequena .dash {
+  zoom: 0.95;
+}
+
+html.fonte-grande .dash {
+  zoom: 1.05;
+}
+
+/* ---------- Densidade compacta ---------- */
+
+html.densidade-compacta .redes-tabela thead th,
+html.densidade-compacta .redes-tabela tbody td {
+  padding: 8px 10px;
+}
+
+html.densidade-compacta .redes-filtros {
+  padding: 10px;
+}
+
+html.densidade-compacta .redes-resumo-card {
+  padding: 10px 14px;
+  gap: 10px;
+}
+
+html.densidade-compacta .redes-resumo-icone {
+  width: 34px;
+  height: 34px;
+}
+
+html.densidade-compacta .detalhe-bloco,
+html.densidade-compacta .rel-card {
+  padding: 14px 16px;
+}
+
+html.densidade-compacta .room-card {
+  padding: 14px;
+  gap: 10px;
+}
+
+html.densidade-compacta .rel-indicador {
+  padding: 10px 12px;
+}
+
+/* ---------- Tema escuro (casca escura, cartões claros) ---------- */
+
+html.tema-escuro body {
+  background: #0b1220;
+}
+
+html.tema-escuro .dash-main {
+  background: #0b1220;
+}
+
+html.tema-escuro .dash-topbar,
+html.tema-escuro .dash-sidebar {
+  background: #101a2e;
+  border-color: #1f2937;
+}
+
+html.tema-escuro .topbar-search {
+  background: #1f2937;
+}
+
+html.tema-escuro .topbar-search input {
+  color: #f3f4f6;
+}
+
+html.tema-escuro .topbar-search input::placeholder {
+  color: #6b7280;
+}
+
+html.tema-escuro .main-header h1 {
+  color: #f9fafb;
+}
+
+html.tema-escuro .main-header p {
+  color: #9ca3af;
+}
+
+html.tema-escuro .nav-item {
+  color: #9ca3af;
+}
+
+html.tema-escuro .nav-item:hover {
+  background: #1f2937;
+  color: #e5e7eb;
+}
+
+html.tema-escuro .bell-btn,
+html.tema-escuro .avatar-btn {
+  color: #9ca3af;
+}
+
+html.tema-escuro .bell-btn:hover,
+html.tema-escuro .avatar-btn:hover {
+  background: #1f2937;
+}
+
+html.tema-escuro .empty-state {
+  background: #101a2e;
+  border-color: #334155;
+  color: #9ca3af;
+}
+
+html.tema-escuro .avatar-menu,
+html.tema-escuro .notificacoes-painel,
+html.tema-escuro .room-menu-drop,
+html.tema-escuro .equip-menu {
+  background: #101a2e;
+  border-color: #1f2937;
+}
+
+html.tema-escuro .menu-user-name {
+  color: #f3f4f6;
+}
+
+html.tema-escuro .menu-item {
+  color: #e5e7eb;
+}
+
+html.tema-escuro .menu-item:hover {
+  background: #1f2937;
+}
+
+html.tema-escuro .menu-divider {
+  background: #1f2937;
+}
+
+html.tema-escuro .notificacoes-painel li button:hover {
+  background: #1f2937;
+}
+
+html.tema-escuro .notificacoes-painel footer {
+  background: #0b1220;
+}
+
+html.tema-escuro .notificacoes-vazio p {
+  color: #9ca3af;
+}
+
+html.tema-escuro .rel-filtro-campo {
+  color: #9ca3af;
+}

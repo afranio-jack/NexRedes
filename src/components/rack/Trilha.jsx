@@ -1,4 +1,4 @@
-// Trilha de navegação (Projetos › Sala › Rack › Equipamento)
+// Trilha de navegação (Salas › Sala › Rack › Equipamento)
 
 import { ChevronRightIcon } from '../icons'
 

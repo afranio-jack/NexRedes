@@ -55,18 +55,23 @@ export default function SalaDetalhe({
         ) || null
       : null
 
-  // Abertura com foco vinda de fora (cadeia de conexão da página do ponto):
-  // já entra na página do equipamento, destacando a porta informada.
+  // Abertura com foco vinda de fora (cadeia do ponto, painel do ponto ou
+  // tela Equipamentos): abre direto na página do equipamento (destacando a
+  // porta informada) ou na página do rack.
   useEffect(() => {
     if (!focoInicial) return
     const { rackId, equipamentoId, portaId } = focoInicial
-    const equipamento = listarEquipamentos(sala).find(
-      (item) => item.id === equipamentoId && item.rackId === rackId
-    )
-    if (equipamento) {
+    if (equipamentoId) {
+      const equipamento = listarEquipamentos(sala).find(
+        (item) => item.id === equipamentoId && item.rackId === rackId
+      )
+      if (equipamento) {
+        setRackAbertoId(rackId)
+        setEquipamentoAbertoId(equipamentoId)
+        if (portaId) setPortaDestaqueId(portaId)
+      }
+    } else if (rackId && obterRack(sala, rackId)) {
       setRackAbertoId(rackId)
-      setEquipamentoAbertoId(equipamentoId)
-      if (portaId) setPortaDestaqueId(portaId)
     }
     onFocoConsumido?.()
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -111,7 +116,7 @@ export default function SalaDetalhe({
         onClick={onVoltar}
       >
         <ArrowLeftIcon size={16} />
-        Voltar aos projetos
+        Voltar às salas
       </button>
 
       <header

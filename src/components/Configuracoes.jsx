@@ -1,90 +1,75 @@
-// Página "Configurações" (/configuracoes): por ora apenas a seção
-// "Etiquetas" — edição dos modelos (nome e tamanhos em mm) e do prefixo
-// padrão de nomenclatura dos pontos, usado como sugestão no cadastro e na
-// numeração automática de etiquetas. O gerador e o formulário de teste NÃO
-// vivem aqui (ficam na aba Redes).
+// Página "Configurações" (/configuracoes): organizada em sub-abas — Geral |
+// Rede | Etiquetas | Equipamentos | Testes | Notificações | Aparência |
+// Dados | Conta | Sobre — mantendo o cartão "Etiquetas" original dentro da
+// seção Etiquetas. Cada seção tem seu botão "Salvar alterações" e aviso de
+// confirmação (toast) ao salvar.
 
 import { useState } from 'react'
-import { TagIcon, PlusIcon, TrashIcon } from './icons'
-import { CampoInput } from './sala/Campo'
-import ConfirmDialog from './sala/ConfirmDialog'
+import {
+  BuildingIcon,
+  NetworkIcon,
+  TagIcon,
+  ServerIcon,
+  ClipboardCheckIcon,
+  BellIcon,
+  PaletteIcon,
+  DatabaseIcon,
+  UserCircleIcon,
+  HelpCircleIcon,
+} from './icons'
 import './sala/SalaModal.css'
 import './sala/SalaDetalhe.css'
+import './redes/redes.css'
 import './Configuracoes.css'
-import {
-  listarModelos,
-  salvarModelos,
-  excluirModelo,
-  restaurarModelosPadrao,
-  obterConfig,
-  salvarConfig,
-} from '../utils/etiquetas'
+import { obterConfig, salvarConfig } from '../utils/etiquetas'
+import SecaoGeral from './configuracoes/SecaoGeral'
+import SecaoRede from './configuracoes/SecaoRede'
+import SecaoEtiquetas from './configuracoes/SecaoEtiquetas'
+import SecaoEquipamentos from './configuracoes/SecaoEquipamentos'
+import SecaoTestes from './configuracoes/SecaoTestes'
+import SecaoNotificacoes from './configuracoes/SecaoNotificacoes'
+import SecaoAparencia from './configuracoes/SecaoAparencia'
+import SecaoDados from './configuracoes/SecaoDados'
+import SecaoConta from './configuracoes/SecaoConta'
+import SecaoSobre from './configuracoes/SecaoSobre'
 
-function novoModelo() {
-  return {
-    id: `novo-${Date.now().toString(36)}`,
-    nome: '',
-    largura: '',
-    altura: '',
-    configuracao: {},
-  }
-}
+const SUBABAS = [
+  { id: 'geral', label: 'Geral', Icon: BuildingIcon },
+  { id: 'rede', label: 'Rede', Icon: NetworkIcon },
+  { id: 'etiquetas', label: 'Etiquetas', Icon: TagIcon },
+  { id: 'equipamentos', label: 'Equipamentos', Icon: ServerIcon },
+  { id: 'testes', label: 'Testes', Icon: ClipboardCheckIcon },
+  { id: 'notificacoes', label: 'Notificações', Icon: BellIcon },
+  { id: 'aparencia', label: 'Aparência', Icon: PaletteIcon },
+  { id: 'dados', label: 'Dados', Icon: DatabaseIcon },
+  { id: 'conta', label: 'Conta', Icon: UserCircleIcon },
+  { id: 'sobre', label: 'Sobre', Icon: HelpCircleIcon },
+]
 
-export default function Configuracoes({ onMostrarToast }) {
-  const [modelos, setModelos] = useState(() => listarModelos())
-  const [prefixo, setPrefixo] = useState(() => obterConfig().prefixoPadrao)
-  const [modeloParaExcluir, setModeloParaExcluir] = useState(null)
-  const [confirmarPadrao, setConfirmarPadrao] = useState(false)
+export default function Configuracoes({
+  user,
+  salas,
+  onLogout,
+  onMostrarToast,
+  onUsuarioAlterado,
+  onDadosAlterados,
+  onConfigAlterado,
+}) {
+  const [subaba, setSubaba] = useState('geral')
+  const [config, setConfig] = useState(() => obterConfig())
 
-  function atualizarModelo(id, campo, valor) {
-    setModelos((atual) =>
-      atual.map((modelo) =>
-        modelo.id === id ? { ...modelo, [campo]: valor } : modelo
-      )
-    )
-  }
-
-  function adicionarModelo() {
-    setModelos((atual) => [...atual, novoModelo()])
-  }
-
-  function removerModelo(id) {
-    const restantes = modelos.filter((modelo) => modelo.id !== id)
-    setModelos(restantes)
-    // Se o modelo já estava salvo, remove também do armazenamento
-    if (!id.startsWith('novo-')) excluirModelo(id)
-    onMostrarToast?.('Modelo excluído')
+  function atualizarConfigLocal() {
+    setConfig(obterConfig())
+    onConfigAlterado?.()
   }
 
-  function salvarTudo() {
-    const validos = modelos.filter(
-      (modelo) =>
-        (modelo.nome || '').trim() !== '' &&
-        Number(modelo.largura) > 0 &&
-        Number(modelo.altura) > 0
-    )
-    if (validos.length !== modelos.length) {
-      onMostrarToast?.('Preencha nome, largura e altura de todos os modelos')
-      return
-    }
-    salvarModelos(
-      validos.map((modelo) => ({
-        ...modelo,
-        nome: modelo.nome.trim(),
-        largura: Number(modelo.largura),
-        altura: Number(modelo.altura),
-      }))
-    )
-    salvarConfig({ prefixoPadrao: prefixo.trim() || 'CO-P' })
-    setModelos(listarModelos())
+  // Salva uma seção mesclando com as demais configurações (nunca apaga o
+  // resto) e mostra o aviso de confirmação.
+  function salvarSecao(parcial) {
+    salvarConfig({ ...obterConfig(), ...parcial })
+    setConfig(obterConfig())
+    onConfigAlterado?.()
     onMostrarToast?.('Configurações salvas com sucesso')
-  }
-
-  function restaurarPadrao() {
-    restaurarModelosPadrao()
-    setModelos(listarModelos())
-    setConfirmarPadrao(false)
-    onMostrarToast?.('Modelos padrão restaurados')
   }
 
   return (
@@ -96,140 +81,66 @@ export default function Configuracoes({ onMostrarToast }) {
         </div>
       </div>
 
-      <section className="detalhe-bloco configuracoes-bloco">
-        <h2>
-          <TagIcon size={18} />
-          Etiquetas
-        </h2>
-        <p className="configuracoes-descricao">
-          Modelos usados pelo gerador de etiquetas (aba Redes) e o prefixo
-          padrão de nomenclatura dos pontos de rede.
-        </p>
+      <div className="redes-subabas" role="tablist" aria-label="Seções de Configurações">
+        {SUBABAS.map((item) => (
+          <button
+            key={item.id}
+            type="button"
+            role="tab"
+            className={`redes-subaba${subaba === item.id ? ' ativa' : ''}`}
+            aria-selected={subaba === item.id}
+            onClick={() => setSubaba(item.id)}
+          >
+            {item.label}
+          </button>
+        ))}
+      </div>
 
-        <div className="configuracoes-prefixo">
-          <CampoInput
-            chave="prefixoPadrao"
-            label="Prefixo padrão de nomenclatura"
-            placeholder="ex.: CO-P"
-            valor={prefixo}
-            aoAlterar={setPrefixo}
+      <div className="configuracoes-conteudo">
+        {subaba === 'geral' && (
+          <SecaoGeral config={config} onSalvar={salvarSecao} />
+        )}
+        {subaba === 'rede' && <SecaoRede config={config} onSalvar={salvarSecao} />}
+        {subaba === 'etiquetas' && (
+          <SecaoEtiquetas
+            config={config}
+            onSalvar={salvarSecao}
+            onConfigAlterado={atualizarConfigLocal}
+            onMostrarToast={onMostrarToast}
           />
-          <p className="etiquetas-nota">
-            Usado como sugestão ao criar pontos (ex.: {prefixo}01) e na
-            numeração automática das etiquetas.
-          </p>
-        </div>
-
-        <div className="configuracoes-modelos">
-          <div className="configuracoes-modelos-topo">
-            <h3>Modelos de etiqueta</h3>
-            <button
-              type="button"
-              className="redes-filtro-btn"
-              onClick={adicionarModelo}
-            >
-              <PlusIcon size={14} />
-              Adicionar modelo
-            </button>
-          </div>
-          <div className="configuracoes-modelos-grade configuracoes-modelos-cabecalho">
-            <span>Nome</span>
-            <span>Largura (mm)</span>
-            <span>Altura (mm)</span>
-            <span className="configuracoes-coluna-acoes"></span>
-          </div>
-          {modelos.map((modelo) => (
-            <div
-              className="configuracoes-modelos-grade"
-              key={modelo.id}
-            >
-              <input
-                type="text"
-                className="campo-input"
-                value={modelo.nome}
-                aria-label="Nome do modelo"
-                placeholder="ex.: 25 × 50 mm"
-                onChange={(evento) =>
-                  atualizarModelo(modelo.id, 'nome', evento.target.value)
-                }
-              />
-              <input
-                type="number"
-                min="1"
-                step="0.1"
-                className="campo-input"
-                value={modelo.largura}
-                aria-label="Largura do modelo em milímetros"
-                onChange={(evento) =>
-                  atualizarModelo(modelo.id, 'largura', evento.target.value)
-                }
-              />
-              <input
-                type="number"
-                min="1"
-                step="0.1"
-                className="campo-input"
-                value={modelo.altura}
-                aria-label="Altura do modelo em milímetros"
-                onChange={(evento) =>
-                  atualizarModelo(modelo.id, 'altura', evento.target.value)
-                }
-              />
-              <button
-                type="button"
-                className="redes-btn-acao perigo configuracoes-btn-excluir"
-                aria-label={`Excluir modelo ${modelo.nome || 'sem nome'}`}
-                title="Excluir modelo"
-                onClick={() => setModeloParaExcluir(modelo)}
-              >
-                <TrashIcon size={15} />
-              </button>
-            </div>
-          ))}
-          <div className="configuracoes-modelos-acoes">
-            <button
-              type="button"
-              className="redes-filtro-btn"
-              onClick={() => setConfirmarPadrao(true)}
-            >
-              Restaurar modelos padrão
-            </button>
-            <button
-              type="button"
-              className="btn-new"
-              onClick={salvarTudo}
-            >
-              Salvar alterações
-            </button>
-          </div>
-        </div>
-      </section>
-
-      {modeloParaExcluir && (
-        <ConfirmDialog
-          titulo="Excluir modelo"
-          texto={`Tem certeza que deseja excluir o modelo “${
-            modeloParaExcluir.nome || 'sem nome'
-          }”?`}
-          confirmarLabel="Excluir"
-          perigo
-          onConfirmar={() => {
-            removerModelo(modeloParaExcluir.id)
-            setModeloParaExcluir(null)
-          }}
-          onCancelar={() => setModeloParaExcluir(null)}
-        />
-      )}
-
-      {confirmarPadrao && (
-        <ConfirmDialog
-          titulo="Restaurar modelos padrão"
-          texto="Os modelos personalizados serão substituídos pelos quatro modelos pré-definidos (9 × 25, 12 × 50, 25 × 50 e Folha A4 com 30 etiquetas)."
-          confirmarLabel="Restaurar"
-          onConfirmar={restaurarPadrao}
-          onCancelar={() => setConfirmarPadrao(false)}
-        />
-      )}
+        )}
+        {subaba === 'equipamentos' && (
+          <SecaoEquipamentos config={config} onSalvar={salvarSecao} />
+        )}
+        {subaba === 'testes' && (
+          <SecaoTestes config={config} onSalvar={salvarSecao} />
+        )}
+        {subaba === 'notificacoes' && (
+          <SecaoNotificacoes config={config} onSalvar={salvarSecao} />
+        )}
+        {subaba === 'aparencia' && (
+          <SecaoAparencia config={config} onSalvar={salvarSecao} />
+        )}
+        {subaba === 'dados' && (
+          <SecaoDados
+            salas={salas}
+            onDadosAlterados={onDadosAlterados}
+            onConfigAlterado={atualizarConfigLocal}
+            onMostrarToast={onMostrarToast}
+          />
+        )}
+        {subaba === 'conta' && (
+          <SecaoConta
+            user={user}
+            config={config}
+            onLogout={onLogout}
+            onUsuarioAlterado={onUsuarioAlterado}
+            onSalvar={salvarSecao}
+            onMostrarToast={onMostrarToast}
+          />
+        )}
+        {subaba === 'sobre' && <SecaoSobre />}
+      </div>
     </main>
   )
 }

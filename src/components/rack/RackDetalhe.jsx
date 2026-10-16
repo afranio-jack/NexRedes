@@ -179,7 +179,7 @@ export default function RackDetalhe({
     <div className="rack-pagina">
       <Trilha
         itens={[
-          { label: 'Projetos', onClick: onVoltarProjetos },
+          { label: 'Salas', onClick: onVoltarProjetos },
           { label: sala.nome, onClick: onVoltarSala },
           { label: rack.nome },
         ]}

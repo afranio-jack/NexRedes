@@ -43,3 +43,20 @@ export function findUser(username, password) {
   if (!user || user.password !== password) return null
   return user
 }
+
+// Atualiza dados da conta do próprio usuário (nome de exibição e senha).
+// O username nunca muda — é a chave de isolamento dos dados.
+export function atualizarUsuario(username, dados) {
+  const users = getUsers()
+  const u = (username || '').toLowerCase()
+  const indice = users.findIndex((user) => user.username === u)
+  if (indice === -1) return null
+  const atualizado = { ...users[indice] }
+  if (dados && dados.name !== undefined) atualizado.name = dados.name
+  if (dados && dados.password !== undefined) {
+    atualizado.password = dados.password
+  }
+  users[indice] = atualizado
+  saveUsers(users)
+  return atualizado
+}

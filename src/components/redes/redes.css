@@ -159,6 +159,11 @@
   gap: 14px;
 }
 
+/* Faixa de 5 cartões (Pontos: total, PASS, FAIL, sem teste, não conectados) */
+.redes-resumo-grid.cinco {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
 .redes-resumo-card {
   display: flex;
   align-items: center;
@@ -211,6 +216,11 @@
 .redes-resumo-card.ambar .redes-resumo-icone {
   background: #fffbeb;
   color: #b45309;
+}
+
+.redes-resumo-card.cinza .redes-resumo-icone {
+  background: #f3f4f6;
+  color: #4b5563;
 }
 
 /* ---------- Tabelas ---------- */
@@ -898,6 +908,13 @@
   font-weight: 800;
 }
 
+.etiqueta-logo {
+  height: 4mm;
+  max-width: 100%;
+  object-fit: contain;
+  margin-bottom: 0.5mm;
+}
+
 .vazio-etiqueta {
   color: #d1d5db;
 }
@@ -980,6 +997,10 @@
   .redes-resumo-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+
+  .redes-resumo-grid.cinco {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 960px) {
@@ -992,6 +1013,10 @@
 @media (max-width: 640px) {
   .redes-resumo-grid {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  .redes-resumo-grid.cinco {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .redes-busca {
@@ -1015,4 +1040,288 @@
   .redes-drawer-grade {
     grid-template-columns: minmax(0, 1fr);
   }
+
+  .redes-cartoes-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* ---------- Alternância Lista | Cartões ---------- */
+
+.redes-vista-toggle {
+  display: inline-flex;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #fff;
+}
+
+.redes-vista-toggle button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 40px;
+  padding: 0 14px;
+  border: none;
+  background: none;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: #6b7280;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.redes-vista-toggle button + button {
+  border-left: 1px solid #e5e7eb;
+}
+
+.redes-vista-toggle button.ativo {
+  background: #eff6ff;
+  color: #2563eb;
+}
+
+/* ---------- Coluna de seleção da tabela ---------- */
+
+.redes-th-check {
+  width: 40px;
+  text-align: center;
+}
+
+.redes-th-check input,
+.redes-td-check input {
+  width: 15px;
+  height: 15px;
+  accent-color: #2563eb;
+  cursor: pointer;
+}
+
+.redes-td-check {
+  text-align: center;
+}
+
+/* ---------- Barra de ações em lote ---------- */
+
+.redes-lote-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 12px 16px;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 12px;
+}
+
+.redes-lote-bar > strong {
+  font-size: 13.5px;
+  color: #1d4ed8;
+}
+
+.redes-lote-acoes {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.redes-lote-acoes .redes-filtro-btn {
+  background: #fff;
+}
+
+.redes-filtro-btn.perigo:hover {
+  border-color: #dc2626;
+  color: #dc2626;
+  background: #fef2f2;
+}
+
+.lote-lista-pontos {
+  margin: 0;
+  font-size: 13px;
+  color: #4b5563;
+  line-height: 1.5;
+}
+
+/* ---------- Visualização em cartões ---------- */
+
+.redes-cartoes-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.ponto-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  padding: 14px;
+  gap: 10px;
+  transition: box-shadow 0.15s;
+}
+
+.ponto-card:hover {
+  box-shadow: 0 10px 24px rgba(17, 24, 39, 0.08);
+}
+
+.ponto-card-check {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+}
+
+.ponto-card-check input {
+  width: 16px;
+  height: 16px;
+  accent-color: #2563eb;
+  cursor: pointer;
+}
+
+.ponto-card-corpo {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.ponto-card-topo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.ponto-card-titulo {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14.5px;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.ponto-card-titulo svg {
+  color: #2563eb;
+  flex-shrink: 0;
+}
+
+.ponto-card-cadeia {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  font-size: 12.5px;
+  color: #4b5563;
+}
+
+.ponto-card-cadeia > svg {
+  color: #9ca3af;
+  flex-shrink: 0;
+}
+
+.ponto-card-aviso {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #b45309;
+  background: #fffbeb;
+  border-radius: 999px;
+  padding: 3px 10px;
+}
+
+.ponto-card-acoes {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+/* ---------- Painel lateral do ponto ---------- */
+
+.painel-ponto-cabecalho {
+  align-items: flex-start;
+}
+
+.painel-ponto-cabecalho-lado {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.painel-ponto-titulo {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #1f2937;
+}
+
+.painel-ponto-titulo svg {
+  color: #2563eb;
+}
+
+.painel-ponto-atalhos {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding-top: 16px;
+}
+
+.painel-ponto-atalhos .btn-new {
+  height: 38px;
+  padding: 0 14px;
+  font-size: 13px;
+}
+
+.painel-ponto-atalhos .ponto-btn-neutro {
+  height: 38px;
+  padding: 0 14px;
+  font-size: 13px;
+}
+
+.painel-ponto-cadeia {
+  flex-wrap: wrap;
+}
+
+.painel-ponto-dados {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.painel-ponto-dados p {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0;
+  padding: 8px 10px;
+  background: #f9fafb;
+  border-radius: 8px;
+}
+
+.painel-ponto-dados p span {
+  font-size: 12px;
+  color: #6b7280;
+  font-weight: 600;
+}
+
+.painel-ponto-dados p strong {
+  font-size: 13px;
+  color: #1f2937;
+  text-align: right;
+}
+
+.painel-ponto-obs span {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #6b7280;
 }

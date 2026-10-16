@@ -153,12 +153,14 @@ export function validarPonto(sala, form, pontoIdAtual = null) {
   return erros
 }
 
-// Sugere a próxima identificação disponível da sala (prefixo + número)
-export function sugerirIdentificacao(sala, prefixo = 'CO-P') {
+// Sugere a próxima identificação disponível da sala (prefixo + número);
+// `digitos` vem da Configuração → Etiquetas → Nomenclatura (2 → P01, 3 → P001)
+export function sugerirIdentificacao(sala, prefixo = 'CO-P', digitos = 2) {
   const pontos = sala?.pontos || []
+  const largura = Math.max(1, Number(digitos) || 2)
   let numero = pontos.length + 1
   for (;;) {
-    const candidata = `${prefixo}${String(numero).padStart(2, '0')}`
+    const candidata = `${prefixo}${String(numero).padStart(largura, '0')}`
     const existe = pontos.some(
       (ponto) =>
         texto(ponto.identificacao).toLowerCase() === candidata.toLowerCase()
@@ -432,6 +434,138 @@ export function excluirPonto(pontoId) {
   sala.pontos.splice(indice, 1)
   salvarSalas(salas)
   return true
+}
+
+// ---------- Ações em lote e importação ----------
+
+// Desfaz a cadeia física do ponto (portas marcadas + vínculo frente↔switch
+// criado por ele), sem remover o registro do ponto.
+function desfazerCadeiaDoPonto(sala, ponto) {
+  const patchPanel = ponto.patchPanelId
+    ? encontrarEquipamentoNaSala(sala, ponto.patchPanelId)
+    : null
+  const portaVerso = patchPanel
+    ? encontrarPorta(patchPanel, ponto.portaPatchPanelId)
+    : null
+  const portaFrente = portaVerso && patchPanel
+    ? (patchPanel.portas || []).find(
+        (porta) => porta.lado === 'frente' && porta.numero === portaVerso.numero
+      )
+    : null
+  const switchEquipamento = ponto.switchId
+    ? encontrarEquipamentoNaSala(sala, ponto.switchId)
+    : null
+  const portaSwitch = switchEquipamento
+    ? encontrarPorta(switchEquipamento, ponto.portaSwitchId)
+    : null
+
+  if (portaVerso) {
+    desmarcarPorta(portaVerso, ponto.id)
+    registrarHistorico(
+      portaVerso,
+      `Vínculo com o ponto ${ponto.identificacao} removido`
+    )
+  }
+  if (portaSwitch) {
+    desmarcarPorta(portaSwitch, ponto.id)
+    registrarHistorico(
+      portaSwitch,
+      `Vínculo com o ponto ${ponto.identificacao} removido`
+    )
+  }
+  if (
+    portaFrente &&
+    portaSwitch &&
+    portaFrente.vinculo?.portaId === portaSwitch.id &&
+    portaSwitch.vinculo?.portaId === portaFrente.id
+  ) {
+    portaFrente.vinculo = null
+    portaSwitch.vinculo = null
+  }
+}
+
+// Move vários pontos para outra sala: a cadeia física (portas do patch panel
+// e do switch) é desfeita na sala de origem e zerada no registro — o ponto
+// fica pronto para ser revinculado na sala de destino.
+export function moverPontosParaSala(pontoIds, salaDestinoId) {
+  const salas = carregarSalas()
+  const destino = encontrarSala(salas, salaDestinoId)
+  if (!destino) return 0
+  const ids = new Set(pontoIds)
+  const movidos = []
+  for (const sala of salas) {
+    if (sala.id === destino.id) continue
+    const pontos = sala.pontos || []
+    for (const ponto of pontos) {
+      if (!ids.has(ponto.id)) continue
+      desfazerCadeiaDoPonto(sala, ponto)
+      Object.assign(ponto, {
+        salaId: destino.id,
+        patchPanelId: null,
+        portaPatchPanelId: null,
+        portaPatchPanel: null,
+        switchId: null,
+        portaSwitchId: null,
+        portaSwitch: null,
+      })
+      movidos.push(ponto)
+    }
+    sala.pontos = pontos.filter((ponto) => !ids.has(ponto.id))
+  }
+  if (movidos.length > 0) {
+    destino.pontos = [...(destino.pontos || []), ...movidos]
+    salvarSalas(salas)
+  }
+  return movidos.length
+}
+
+// Cria um ponto sem cadeia física (usado pela importação de planilha):
+// identificação, categoria do cabo e observações; patch panel e switch são
+// vinculados depois, pela edição normal do ponto.
+export function criarPontoAvulso(salaId, dados) {
+  const salas = carregarSalas()
+  const sala = encontrarSala(salas, salaId)
+  if (!sala) return null
+  const ponto = {
+    id: criarIdItem('ponto'),
+    identificacao: texto(dados.identificacao),
+    salaId: sala.id,
+    patchPanelId: null,
+    portaPatchPanelId: null,
+    portaPatchPanel: null,
+    switchId: null,
+    portaSwitchId: null,
+    portaSwitch: null,
+    categoriaCabo: dados.categoriaCabo || '',
+    observacoes: texto(dados.observacoes),
+    criadoEm: agoraISO(),
+  }
+  sala.pontos = [...(sala.pontos || []), ponto]
+  salvarSalas(salas)
+  return ponto
+}
+
+// Exclui vários pontos de uma vez (portas ligadas são liberadas).
+// Devolve a quantidade excluída.
+export function excluirPontos(pontoIds) {
+  const salas = carregarSalas()
+  const ids = new Set(pontoIds)
+  let excluidos = 0
+  for (const sala of salas) {
+    const pontos = sala.pontos || []
+    const remanescentes = []
+    for (const ponto of pontos) {
+      if (ids.has(ponto.id)) {
+        desfazerCadeiaDoPonto(sala, ponto)
+        excluidos++
+      } else {
+        remanescentes.push(ponto)
+      }
+    }
+    sala.pontos = remanescentes
+  }
+  if (excluidos > 0) salvarSalas(salas)
+  return excluidos
 }
 
 // ---------- Reconciliação (portas mudam por fora do ponto) ----------
