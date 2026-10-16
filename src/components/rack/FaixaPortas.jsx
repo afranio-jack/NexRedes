@@ -43,7 +43,9 @@ const FaixaPortas = forwardRef(function FaixaPortas(
     falhas = [],
     selecionadaId,
     estadoFiltro,
+    numeroEspelhado = null,
     onClicarPorta,
+    onNumeroEspelhado,
     rotuloDaPorta,
     linhasDaPorta,
     titulo = 'Portas',
@@ -206,6 +208,9 @@ const FaixaPortas = forwardRef(function FaixaPortas(
                 estadoInfo={info}
                 selecionada={porta.id === selecionadaId}
                 apagada={apagada}
+                espelhada={
+                  numeroEspelhado != null && porta.numero === numeroEspelhado
+                }
                 linhasTooltip={linhasDaPorta ? linhasDaPorta(porta) : undefined}
                 tabIndex={
                   porta.id === focoId || (!focoId && primeira) ? 0 : -1
@@ -213,6 +218,14 @@ const FaixaPortas = forwardRef(function FaixaPortas(
                 aoClicar={onClicarPorta}
                 aoFocar={(p) => setFocoId(p.id)}
                 aoTeclar={aoTeclar}
+                aoEspelhar={
+                  onNumeroEspelhado
+                    ? (p) => onNumeroEspelhado(p.numero)
+                    : undefined
+                }
+                aoDesespelhar={
+                  onNumeroEspelhado ? () => onNumeroEspelhado(null) : undefined
+                }
               />
             </span>
           )}

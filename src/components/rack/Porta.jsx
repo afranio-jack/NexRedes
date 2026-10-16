@@ -1,5 +1,8 @@
 // Porta visual: quadradinho colorido pelo estado calculado, com número
 // dentro, mini ícone de estado (cor + ícone, nunca só cor) e tooltip.
+// `espelhada` destaca a porta de mesmo número na outra faixa (frente/verso
+// do patch panel são a mesma porta física); `aoEspelhar`/`aoDesespelhar`
+// avisam a página para espelhar o destaque no hover/foco.
 
 import { useRef, useState } from 'react'
 
@@ -9,11 +12,14 @@ export default function Porta({
   estadoInfo,
   selecionada,
   apagada,
+  espelhada = false,
   tabIndex,
   linhasTooltip,
   aoClicar,
   aoFocar,
   aoTeclar,
+  aoEspelhar,
+  aoDesespelhar,
 }) {
   const refBotao = useRef(null)
   const [posicao, setPosicao] = useState(null)
@@ -34,10 +40,12 @@ export default function Porta({
       abaixo,
     })
     aoFocar?.(porta)
+    aoEspelhar?.(porta)
   }
 
   function fecharTooltip() {
     setPosicao(null)
+    aoDesespelhar?.(porta)
   }
 
   const linhas =
@@ -57,7 +65,9 @@ export default function Porta({
         type="button"
         className={`porta-visual porta-${estadoInfo.id}${
           selecionada ? ' selecionada' : ''
-        }${apagada ? ' apagada' : ''}${porta.sfp ? ' porta-sfp' : ''}`}
+        }${apagada ? ' apagada' : ''}${espelhada ? ' espelhada' : ''}${
+          porta.sfp ? ' porta-sfp' : ''
+        }`}
         style={{ background: estadoInfo.cor, borderColor: estadoInfo.borda }}
         onClick={() => aoClicar?.(porta)}
         onMouseEnter={abrirTooltip}

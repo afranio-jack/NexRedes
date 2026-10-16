@@ -7,8 +7,6 @@ import {
   AccessPointIcon,
   CameraIcon,
   PhoneIcon,
-  SwitchIcon,
-  PatchPanelIcon,
   BoxIcon,
   PlugIcon,
   CheckCircleIcon,
@@ -108,15 +106,16 @@ export function estadoPortaInfo(id) {
   return ESTADOS_PORTA.find((estado) => estado.id === id) || ESTADOS_PORTA[0]
 }
 
-// Tipos de dispositivo que podem estar conectados a uma porta
+// Tipos de dispositivo que podem estar conectados a uma porta.
+// "Outro switch" e "Patch panel" foram REMOVIDOS: ligações com switches e
+// patch panels são feitas pelo campo "Vínculos" (SeletorVinculo), não pelo
+// dispositivo conectado. Registros legados migram em utils/migracao.js.
 export const TIPOS_DISPOSITIVO = [
   { id: 'computador', label: 'Computador', Icone: MonitorIcon },
   { id: 'impressora', label: 'Impressora', Icone: PrinterIcon },
   { id: 'access_point', label: 'Access point', Icone: AccessPointIcon },
   { id: 'camera', label: 'Câmera', Icone: CameraIcon },
   { id: 'telefone', label: 'Telefone', Icone: PhoneIcon },
-  { id: 'switch', label: 'Outro switch', Icone: SwitchIcon },
-  { id: 'patch_panel', label: 'Patch panel', Icone: PatchPanelIcon },
   { id: 'outro', label: 'Outro', Icone: BoxIcon },
 ]
 

@@ -1,20 +1,28 @@
 // Modal de criação/edição de ponto de rede: identificação, sala, patch panel
 // e porta, porta do switch e categoria do cabo. Patch panels e switches
-// listados são apenas da sala escolhida e as portas mostradas estão livres
-// (as ocupadas aparecem desabilitadas com "(ocupada)").
+// listados são apenas da sala escolhida; a porta é escolhida numa GRADE
+// VISUAL (GradePortasVinculo) — livres clicáveis, ocupadas desabilitadas
+// com tooltip explicando o motivo. O patch panel usa o lado VERSO (lado
+// dos pontos de rede) e o switch as portas comuns.
 
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { XIcon, NetworkIcon, PatchPanelIcon, SwitchIcon, PlugIcon } from '../icons'
 import { CampoInput, CampoSelect, CampoTextarea } from '../sala/Campo'
 import ConfirmDialog from '../sala/ConfirmDialog'
 import '../sala/SalaModal.css'
+import '../rack/rack.css'
 import { CATEGORIAS_CABO } from '../sala/opcoes'
 import {
   validarPonto,
   sugerirIdentificacao,
   portaDisponivelParaPonto,
 } from '../../utils/pontos'
-import { listarPatchPanels, listarSwitches } from '../../utils/racks'
+import {
+  listarPatchPanels,
+  listarSwitches,
+  descricaoVinculo,
+} from '../../utils/racks'
+import { GradePortasVinculo } from '../rack/SeletorVinculo'
 import { obterConfig } from '../../utils/etiquetas'
 
 function estadoInicial(salas, ponto) {
@@ -70,31 +78,50 @@ export default function PontoModal({ salas, ponto, onFechar, onSalvar }) {
   const switchAtual =
     switches.find((item) => item.id === form.switchId) || null
 
-  const opcoesPortasPP = useMemo(() => {
-    if (!patchPanelAtual) return []
-    const versos = (patchPanelAtual.portas || [])
-      .filter((porta) => porta.lado === 'verso')
-      .sort((a, b) => a.numero - b.numero)
-    return versos.map((porta) => ({
-      valor: porta.id,
-      label: `porta ${porta.numero}`,
-      desabilitada: !portaDisponivelParaPonto(porta, falhas, ponto?.id || null),
-    }))
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [patchPanelAtual, falhas, ponto?.id])
+  const portasPP = useMemo(
+    () =>
+      patchPanelAtual
+        ? (patchPanelAtual.portas || [])
+            .filter((porta) => porta.lado === 'verso')
+            .sort((a, b) => a.numero - b.numero)
+        : [],
+    [patchPanelAtual]
+  )
 
-  const opcoesPortasSwitch = useMemo(() => {
-    if (!switchAtual) return []
-    const comuns = (switchAtual.portas || [])
-      .filter((porta) => !porta.sfp)
-      .sort((a, b) => a.numero - b.numero)
-    return comuns.map((porta) => ({
-      valor: porta.id,
-      label: `porta ${porta.numero}`,
-      desabilitada: !portaDisponivelParaPonto(porta, falhas, ponto?.id || null),
-    }))
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [switchAtual, falhas, ponto?.id])
+  const portasSwitch = useMemo(
+    () =>
+      switchAtual
+        ? (switchAtual.portas || [])
+            .filter((porta) => !porta.sfp)
+            .sort((a, b) => a.numero - b.numero)
+        : [],
+    [switchAtual]
+  )
+
+  const pontoIdAtual = ponto?.id || null
+  const livreParaPonto = (porta) =>
+    portaDisponivelParaPonto(porta, falhas, pontoIdAtual)
+
+  // Motivo pelo qual a porta está ocupada (tooltip da grade)
+  function motivoOcupada(porta) {
+    if (porta.pontoRede?.identificacao) {
+      return `ponto de rede ${porta.pontoRede.identificacao}`
+    }
+    const vinculo = porta.vinculo ? descricaoVinculo(salaAtual, porta) : ''
+    if (vinculo) return `ligada a ${vinculo}`
+    if (porta.uplink?.ativo) {
+      return `uplink${porta.uplink.destino ? ` para ${porta.uplink.destino}` : ''}`
+    }
+    if (porta.dispositivoConectado?.tipo || porta.dispositivoConectado?.nome) {
+      return 'dispositivo conectado'
+    }
+    if (porta.estado === 'desativada' || porta.estado === 'reservada') {
+      return 'desativada ou reservada'
+    }
+    if (porta.falhaId) return 'porta com falha'
+    if (porta.ultimoTeste === 'FAIL') return 'último teste FAIL'
+    return 'em uso'
+  }
 
   // Sugestão automática de identificação na criação (prefixo + próximo nº);
   // trocar de sala só atualiza se o usuário ainda não digitou nada
@@ -331,16 +358,25 @@ export default function PontoModal({ salas, ponto, onFechar, onSalvar }) {
                     erro={erros.patchPanelId}
                     aoAlterar={trocarPatchPanel}
                   />
-                  <CampoSelect
-                    chave="portaPatchPanelId"
-                    label="Porta do patch panel"
-                    obrigatorio
-                    valor={form.portaPatchPanelId}
-                    opcoes={[{ valor: '', label: '—' }].concat(opcoesPortasPP)}
-                    erro={erros.portaPatchPanelId}
-                    aoAlterar={(valor) => atualizar('portaPatchPanelId', valor)}
-                  />
                 </div>
+                {patchPanelAtual && (
+                  <div data-erro-chave="portaPatchPanelId">
+                    <GradePortasVinculo
+                      titulo={`Portas do patch panel ${patchPanelAtual.nome} (verso)`}
+                      rotulo="Escolha a porta do verso (lado dos pontos de rede)"
+                      portas={portasPP}
+                      selecaoId={form.portaPatchPanelId}
+                      estaLivre={livreParaPonto}
+                      rotuloOcupada={motivoOcupada}
+                      aoSelecionar={(porta) =>
+                        atualizar('portaPatchPanelId', porta.id)
+                      }
+                    />
+                    {erros.portaPatchPanelId && (
+                      <p className="vinculo-erro">{erros.portaPatchPanelId}</p>
+                    )}
+                  </div>
+                )}
                 {patchPanels.length === 0 && (
                   <p className="painel-nota">
                     Nenhum patch panel nesta sala. Cadastre um na aba Racks da
@@ -369,18 +405,25 @@ export default function PontoModal({ salas, ponto, onFechar, onSalvar }) {
                     erro={erros.switchId}
                     aoAlterar={trocarSwitch}
                   />
-                  <CampoSelect
-                    chave="portaSwitchId"
-                    label="Porta do switch"
-                    obrigatorio
-                    valor={form.portaSwitchId}
-                    opcoes={[{ valor: '', label: '—' }].concat(
-                      opcoesPortasSwitch
-                    )}
-                    erro={erros.portaSwitchId}
-                    aoAlterar={(valor) => atualizar('portaSwitchId', valor)}
-                  />
                 </div>
+                {switchAtual && (
+                  <div data-erro-chave="portaSwitchId">
+                    <GradePortasVinculo
+                      titulo={`Portas do switch ${switchAtual.nome}`}
+                      rotulo="Escolha a porta do switch"
+                      portas={portasSwitch}
+                      selecaoId={form.portaSwitchId}
+                      estaLivre={livreParaPonto}
+                      rotuloOcupada={motivoOcupada}
+                      aoSelecionar={(porta) =>
+                        atualizar('portaSwitchId', porta.id)
+                      }
+                    />
+                    {erros.portaSwitchId && (
+                      <p className="vinculo-erro">{erros.portaSwitchId}</p>
+                    )}
+                  </div>
+                )}
                 {switches.length === 0 && (
                   <p className="painel-nota">
                     Nenhum switch nesta sala. Cadastre um na aba Racks da sala

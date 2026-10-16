@@ -25,6 +25,7 @@ import {
 } from '../icons'
 import { CampoInput, CampoSelect, CampoTextarea } from '../sala/Campo'
 import ConfirmDialog from '../sala/ConfirmDialog'
+import SeletorVinculo from './SeletorVinculo'
 import {
   ESTADOS_CAMPO,
   TIPOS_DISPOSITIVO,
@@ -46,9 +47,6 @@ import {
   falhaAtivaDaPorta,
   buscarPortaVinculada,
   portaEmUso,
-  listarSwitches,
-  listarPatchPanels,
-  portasComuns,
 } from '../../utils/racks'
 import { pontoDoPainel } from '../../utils/pontos'
 import { ultimoTesteDe } from '../../utils/testes'
@@ -75,26 +73,6 @@ function rotuloGravidade(id) {
 
 function rotuloStatusFalha(id) {
   return STATUS_FALHA.find((item) => item.id === id)?.label || id || 'Aberta'
-}
-
-// Grupos de vínculo: equipamentos da sala + portas livres (ou a própria)
-function gruposVinculo(sala, porta, tipoAlvo) {
-  const equipamentos =
-    tipoAlvo === 'patch_panel' ? listarPatchPanels(sala) : listarSwitches(sala)
-  return equipamentos
-    .map((equipamento) => {
-      const candidatas =
-        equipamento.tipo === 'patch_panel'
-          ? portasComuns(equipamento)
-          : equipamento.portas || []
-      return {
-        equipamento,
-        portas: candidatas.filter(
-          (p) => !p.vinculo || p.vinculo.portaId === porta.id
-        ),
-      }
-    })
-    .filter((grupo) => grupo.portas.length > 0)
 }
 
 function Secao({ titulo, id, children }) {
@@ -670,9 +648,6 @@ function FormIndividual({
 }) {
   const eSwitch = equipamento.tipo === 'switch'
   const eVerso = porta.lado === 'verso'
-  const vinculoAtual = porta.vinculo
-    ? `${porta.vinculo.equipamentoId}::${porta.vinculo.portaId}`
-    : ''
 
   const [form, setForm] = useState(() => ({
     nome: porta.nome || '',
@@ -683,7 +658,12 @@ function FormIndividual({
     ipDispositivo: porta.dispositivoConectado?.ip || '',
     pontoIdentificacao: porta.pontoRede?.identificacao || '',
     pontoLocal: porta.pontoRede?.local || '',
-    vinculo: vinculoAtual,
+    vinculo: porta.vinculo
+      ? {
+          equipamentoId: porta.vinculo.equipamentoId,
+          portaId: porta.vinculo.portaId,
+        }
+      : null,
     categoriaCabo: porta.categoriaCabo || '',
     comprimentoM: porta.comprimentoM ?? '',
     velocidade: porta.velocidade || 'auto',
@@ -695,12 +675,6 @@ function FormIndividual({
     ultimoTeste: porta.ultimoTeste || 'SEM_TESTE',
     observacao: porta.observacao || '',
   }))
-
-  const grupos = eSwitch
-    ? gruposVinculo(sala, porta, 'patch_panel')
-    : porta.lado === 'frente'
-      ? gruposVinculo(sala, porta, 'switch')
-      : []
 
   useEffect(() => {
     onDirty?.(false)
@@ -726,9 +700,6 @@ function FormIndividual({
 
   function aoAplicar(event) {
     event.preventDefault()
-    const [equipamentoId, portaId] = form.vinculo
-      ? form.vinculo.split('::')
-      : [null, null]
     onAplicar({
       nome: form.nome,
       estado: form.estado,
@@ -742,9 +713,7 @@ function FormIndividual({
         identificacao: form.pontoIdentificacao,
         local: form.pontoLocal,
       },
-      vinculo: equipamentoId
-        ? { equipamentoId, portaId }
-        : null,
+      vinculo: form.vinculo,
       categoriaCabo: form.categoriaCabo,
       comprimentoM: form.comprimentoM,
       velocidade: form.velocidade,
@@ -835,66 +804,14 @@ function FormIndividual({
       </Secao>
 
       <Secao titulo="Vínculos">
-        {eSwitch && (
-          <div className="campo">
-            <label htmlFor={`p-${porta.id}-vinculo`}>
-              Patch panel e porta vinculados
-            </label>
-            <select
-              id={`p-${porta.id}-vinculo`}
-              className="campo-input"
-              value={form.vinculo}
-              onChange={(event) => atualizar('vinculo', event.target.value)}
-            >
-              <option value="">Sem vínculo</option>
-              {grupos.map((grupo) => (
-                <optgroup
-                  key={grupo.equipamento.id}
-                  label={grupo.equipamento.nome}
-                >
-                  {grupo.portas.map((p) => (
-                    <option
-                      key={p.id}
-                      value={`${grupo.equipamento.id}::${p.id}`}
-                    >
-                      porta {p.numero}
-                    </option>
-                  ))}
-                </optgroup>
-              ))}
-            </select>
-          </div>
-        )}
-        {equipamento.tipo === 'patch_panel' && porta.lado === 'frente' && (
-          <div className="campo">
-            <label htmlFor={`p-${porta.id}-vinculo`}>
-              Porta de switch vinculada
-            </label>
-            <select
-              id={`p-${porta.id}-vinculo`}
-              className="campo-input"
-              value={form.vinculo}
-              onChange={(event) => atualizar('vinculo', event.target.value)}
-            >
-              <option value="">Sem vínculo</option>
-              {grupos.map((grupo) => (
-                <optgroup
-                  key={grupo.equipamento.id}
-                  label={grupo.equipamento.nome}
-                >
-                  {grupo.portas.map((p) => (
-                    <option
-                      key={p.id}
-                      value={`${grupo.equipamento.id}::${p.id}`}
-                    >
-                      porta {p.numero}
-                      {p.sfp ? ' (SFP)' : ''}
-                    </option>
-                  ))}
-                </optgroup>
-              ))}
-            </select>
-          </div>
+        {(eSwitch || (!eVerso && equipamento.tipo === 'patch_panel')) && (
+          <SeletorVinculo
+            sala={sala}
+            equipamento={equipamento}
+            porta={porta}
+            valor={form.vinculo}
+            aoAlterar={(novo) => atualizar('vinculo', novo)}
+          />
         )}
         {eVerso && (
           <p className="painel-nota">

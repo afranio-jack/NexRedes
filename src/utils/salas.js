@@ -8,7 +8,10 @@
 
 import { ICONES_SALA, CORES_SALA } from '../components/sala/opcoes'
 import { usuarioDaSessao, chaveDeUsuario, carimbarDono } from './sessao'
-import { migrarChaveLegada } from './migracao'
+import {
+  migrarChaveLegada,
+  migrarTiposDispositivoRemovidos,
+} from './migracao'
 
 const CHAVE_BASE = 'nexredes_salas'
 const CHAVE_LEGADA = 'nexredes_salas' // dados de antes do isolamento por usuário
@@ -53,7 +56,13 @@ export function carregarSalas() {
     if (!Array.isArray(salas)) return []
     // Segunda camada: só salas carimbadas com o dono da sessão atual
     const usuario = usuarioDaSessao()
-    return salas.filter((sala) => sala.usuario === usuario)
+    const doUsuario = salas.filter((sala) => sala.usuario === usuario)
+    // Migra valores legados (tipos de dispositivo removidos); salva apenas
+    // quando algo mudou — idempotente.
+    if (migrarTiposDispositivoRemovidos(doUsuario) > 0) {
+      salvarSalas(doUsuario)
+    }
+    return doUsuario
   } catch {
     return []
   }

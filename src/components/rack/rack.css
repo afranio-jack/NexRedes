@@ -1952,7 +1952,7 @@ button.cadeia-item.clicavel:hover {
   }
 }
 
-/* ---------- Ponto estruturado ligado � porta (aba Redes) ---------- */
+/* ---------- Ponto estruturado ligado � porta (aba Redes) ---------- */
 
 .ponto-ligado {
   display: flex;
@@ -2010,4 +2010,359 @@ button.cadeia-item.clicavel:hover {
 .btn-ver-ponto:hover {
   background: #2563eb;
   color: #fff;
+}
+
+/* ---------- Espelho frente ↔ verso (hover na mesma porta N) ----------
+   A porta N da frente e a N do verso são a MESMA porta física: passar o
+   mouse/foco numa delas destaca as duas com contorno tracejado azul. */
+
+.porta-visual.espelhada {
+  outline: 2px dashed #2563eb;
+  outline-offset: 1px;
+  z-index: 2;
+}
+
+/* ---------- Seletor de vínculos (duas etapas: equipamento → porta) ---------- */
+
+.vinculo-seletor {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.vinculo-seletor .painel-nota {
+  margin: 0;
+}
+
+.vinculo-grade {
+  display: flex;
+  flex-direction: column;
+}
+
+.vinculo-rotulo {
+  margin: 0 0 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #6b7280;
+}
+
+.vinculo-atalhos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.vinculo-atalhos .vinculo-input-numero {
+  width: 110px;
+  height: 36px;
+  box-sizing: border-box;
+  flex: 0 0 110px;
+}
+
+.vinculo-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: #fff;
+  color: #1f2937;
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+}
+
+.vinculo-btn:hover:not(:disabled) {
+  border-color: #2563eb;
+  color: #2563eb;
+  background: #eff6ff;
+}
+
+.vinculo-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.vinculo-btn.perigo {
+  color: #b91c1c;
+  border-color: #fca5a5;
+}
+
+.vinculo-btn.perigo:hover:not(:disabled) {
+  border-color: #dc2626;
+  color: #b91c1c;
+  background: #fef2f2;
+}
+
+.vinculo-portas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.vinculo-porta {
+  width: 38px;
+  height: 38px;
+  padding: 0;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: #fff;
+  color: #1f2937;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color 0.12s, background 0.12s, transform 0.12s,
+    color 0.12s;
+}
+
+.vinculo-porta:hover:not(:disabled) {
+  border-color: #2563eb;
+  background: #eff6ff;
+  transform: translateY(-1px);
+}
+
+.vinculo-porta:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 1px;
+}
+
+.vinculo-porta.selecionada,
+.vinculo-porta.selecionada:hover:not(:disabled) {
+  background: #2563eb;
+  border-color: #2563eb;
+  color: #fff;
+  transform: none;
+}
+
+.vinculo-porta.ocupada {
+  background: #f3f4f6;
+  border-color: #e5e7eb;
+  color: #9ca3af;
+  cursor: not-allowed;
+}
+
+.vinculo-porta.sfp {
+  border-radius: 999px;
+}
+
+.vinculo-erro {
+  margin: 8px 0 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: #dc2626;
+}
+
+/* Etapa 1 — escolha do equipamento (busca + cards) */
+
+.vinculo-equip {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.vinculo-equip .painel-nota {
+  margin: 0;
+}
+
+.vinculo-equip-busca {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.vinculo-equip-busca svg {
+  position: absolute;
+  left: 10px;
+  color: #9ca3af;
+  pointer-events: none;
+}
+
+.vinculo-equip-busca .campo-input {
+  padding-left: 32px;
+}
+
+.vinculo-equip-lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.vinculo-equip-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 9px 12px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.vinculo-equip-card:hover {
+  border-color: #93c5fd;
+  background: #f8fafc;
+}
+
+.vinculo-equip-card:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 1px;
+}
+
+.vinculo-equip-icone {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  background: #eff6ff;
+  color: #2563eb;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 30px;
+}
+
+.vinculo-equip-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.vinculo-equip-info strong {
+  font-size: 13px;
+  color: #1f2937;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.vinculo-equip-info span {
+  font-size: 11.5px;
+  color: #6b7280;
+}
+
+/* Cabeçalho da etapa 2 — equipamento escolhido + ações */
+
+.vinculo-cabecalho {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.vinculo-cabecalho strong {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 13px;
+  color: #1f2937;
+  min-width: 0;
+}
+
+.vinculo-cabecalho-icone {
+  width: 26px;
+  height: 26px;
+  border-radius: 7px;
+  background: #eff6ff;
+  color: #2563eb;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 26px;
+}
+
+.vinculo-cabecalho-acoes {
+  display: inline-flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.vinculo-cabecalho-acoes .vinculo-btn {
+  height: 30px;
+  padding: 0 10px;
+  font-size: 12px;
+}
+
+/* Resumo do vínculo escolhido */
+
+.vinculo-resumo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 10px;
+}
+
+.vinculo-resumo-icone {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: #fff;
+  border: 1px solid #bfdbfe;
+  color: #2563eb;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 32px;
+}
+
+.vinculo-resumo-texto {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.vinculo-resumo-texto strong {
+  font-size: 13px;
+  color: #1f2937;
+}
+
+.vinculo-resumo-texto span {
+  font-size: 12px;
+  font-weight: 600;
+  color: #2563eb;
+}
+
+.vinculo-resumo-acoes {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.vinculo-resumo-acoes .vinculo-btn {
+  height: 30px;
+  padding: 0 10px;
+  font-size: 12px;
+}
+
+/* Celular: resumo empilha as ações e a grade continua quebrando linha */
+@media (max-width: 480px) {
+  .vinculo-resumo {
+    flex-wrap: wrap;
+  }
+
+  .vinculo-resumo-acoes {
+    width: 100%;
+    justify-content: flex-end;
+  }
 }

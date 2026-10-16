@@ -63,10 +63,13 @@ export default function PaginaPatchPanel({
   const [selecionados, setSelecionados] = useState(() => new Set()) // números
   const faixaFrenteRef = useRef(null)
   const faixaVersoRef = useRef(null)
-  // painel = { portaIds: [...], lote, ladoInicial }
+  // painel = { portaIds: [...], lote, ladoInicial, focoId }
   const [painel, setPainel] = useState(null)
   // Porta ativa dentro do painel (o destaque do painel visual a acompanha)
   const [portaAtivaPainelId, setPortaAtivaPainelId] = useState(null)
+  // Número da porta sob hover/foco na faixa — espelha o destaque na frente
+  // e no verso (a porta N dos dois lados é a mesma porta física)
+  const [numeroEspelhado, setNumeroEspelhado] = useState(null)
 
   const falhas = sala.falhas || []
   const todasPortas = equipamento.portas || []
@@ -149,12 +152,18 @@ export default function PaginaPatchPanel({
   )
 
   // Porta destacada vinda da cadeia do cabo de outro equipamento:
-  // abre a página já com o painel da porta vinculada
+  // abre a página já com o painel da porta vinculada (frente + verso)
   useEffect(() => {
     if (!portaDestaqueId) return
     const porta = todasPortas.find((p) => p.id === portaDestaqueId)
     if (porta) {
-      setPainel({ portaIds: [porta.id], lote: false, ladoInicial: porta.lado })
+      const portasDaLinha = portasDoNumero(porta.numero)
+      setPainel({
+        portaIds: portasDaLinha.map((p) => p.id),
+        lote: false,
+        ladoInicial: porta.lado,
+        focoId: porta.id,
+      })
       setPortaAtivaPainelId(porta.id)
     }
     onDestaqueConsumido?.()
@@ -187,8 +196,17 @@ export default function PaginaPatchPanel({
   }
 
   function abrirPainelPorta(porta) {
+    // Clique num quadradinho abre a porta N completa (frente + verso no
+    // painel, com abas), começando pelo lado clicado — reforça que os dois
+    // lados são a mesma porta física.
+    const portasDaLinha = portasDoNumero(porta.numero)
     setPortaAtivaPainelId(porta.id)
-    setPainel({ portaIds: [porta.id], lote: false, ladoInicial: porta.lado })
+    setPainel({
+      portaIds: portasDaLinha.map((p) => p.id),
+      lote: false,
+      ladoInicial: porta.lado,
+      focoId: porta.id,
+    })
   }
 
   function abrirPainelLinha(linha) {
@@ -198,6 +216,7 @@ export default function PaginaPatchPanel({
       portaIds: portasDaLinha.map((p) => p.id),
       lote: false,
       ladoInicial: 'frente',
+      focoId: portasDaLinha[0]?.id ?? null,
     })
   }
 
@@ -219,6 +238,12 @@ export default function PaginaPatchPanel({
 
   function aoTrocarPasso(indice, lado) {
     const ids = passos[indice] || []
+    // Destaque imediato da porta ativa do novo passo (o painel confirma
+    // logo depois via onPortaAtivaChange)
+    const ladoAlvo = lado || painel?.ladoInicial || 'frente'
+    const novaAtiva = ids
+      .map((id) => todasPortas.find((p) => p.id === id))
+      .find((p) => p && p.lado === ladoAlvo)
     setPainel((atual) =>
       atual
         ? {
@@ -226,15 +251,10 @@ export default function PaginaPatchPanel({
             portaIds: ids,
             lote: false,
             ladoInicial: lado || atual.ladoInicial || 'frente',
+            focoId: novaAtiva?.id || ids[0] || null,
           }
         : atual
     )
-    // Destaque imediato da porta ativa do novo passo (o painel confirma
-    // logo depois via onPortaAtivaChange)
-    const ladoAlvo = lado || painel?.ladoInicial || 'frente'
-    const novaAtiva = ids
-      .map((id) => todasPortas.find((p) => p.id === id))
-      .find((p) => p && p.lado === ladoAlvo)
     setPortaAtivaPainelId(novaAtiva?.id || ids[0] || null)
   }
 
@@ -434,6 +454,8 @@ export default function PaginaPatchPanel({
               : null
           }
           estadoFiltro={estadoFiltro}
+          numeroEspelhado={numeroEspelhado}
+          onNumeroEspelhado={setNumeroEspelhado}
           onClicarPorta={abrirPainelPorta}
           rotuloDaPorta={rotuloFrente}
           linhasDaPorta={linhasTooltipFrente}
@@ -460,6 +482,8 @@ export default function PaginaPatchPanel({
               : null
           }
           estadoFiltro={estadoFiltro}
+          numeroEspelhado={numeroEspelhado}
+          onNumeroEspelhado={setNumeroEspelhado}
           onClicarPorta={abrirPainelPorta}
           rotuloDaPorta={rotuloVerso}
           linhasDaPorta={linhasTooltipVerso}
@@ -532,7 +556,7 @@ export default function PaginaPatchPanel({
           passos={passos}
           lote={painel.lote}
           ladoInicial={painel.ladoInicial}
-          onFechar={() => fecharPainel(painel.portaIds[0])}
+          onFechar={() => fecharPainel(painel.focoId || painel.portaIds[0])}
           onTrocarPasso={aoTrocarPasso}
           onPortaAtivaChange={setPortaAtivaPainelId}
           onSalvarIndividual={aoSalvarIndividual}
