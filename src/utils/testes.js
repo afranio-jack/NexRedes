@@ -1,5 +1,6 @@
 // Camada de dados dos testes de certificação (aba "Redes").
-// Persistência em localStorage (chave nexredes_testes), separada das salas:
+// Persistência em localStorage, ISOLADA POR USUÁRIO (nexredes_testes:<user>,
+// chave derivada sempre da sessão válida + carimbo de dono em cada teste):
 // o histórico pode sobreviver à exclusão do ponto — cada teste guarda um
 // retrato (snapshot) do ponto e da sala no momento do registro.
 // Um novo teste SEMPRE cria um registro novo; nunca sobrescreve o histórico.
@@ -8,8 +9,11 @@
 import { carregarSalas, salvarSalas } from './salas'
 import { hojeISO, agoraISO } from './datas'
 import { registrarHistorico } from './racks'
+import { usuarioDaSessao, chaveDeUsuario, carimbarDono } from './sessao'
+import { migrarChaveLegada } from './migracao'
 
-const STORAGE_KEY = 'nexredes_testes'
+const CHAVE_BASE = 'nexredes_testes'
+const CHAVE_LEGADA = 'nexredes_testes' // dados de antes do isolamento por usuário
 
 export const NORMAS = ['TIA/EIA-568-C', 'NBR 14565']
 export const MAPAS_FIOS = [
@@ -29,17 +33,26 @@ function texto(valor) {
 }
 
 export function listarTestes() {
+  migrarChaveLegada(CHAVE_LEGADA, CHAVE_BASE)
+  const chave = chaveDeUsuario(CHAVE_BASE)
+  if (!chave) return []
   try {
-    const bruto = localStorage.getItem(STORAGE_KEY)
+    const bruto = localStorage.getItem(chave)
     const testes = bruto ? JSON.parse(bruto) : []
-    return Array.isArray(testes) ? testes : []
+    if (!Array.isArray(testes)) return []
+    // Segunda camada: só testes carimbados com o dono da sessão atual
+    const usuario = usuarioDaSessao()
+    return testes.filter((teste) => teste.usuario === usuario)
   } catch {
     return []
   }
 }
 
 function salvarTestes(testes) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(testes))
+  const chave = chaveDeUsuario(CHAVE_BASE)
+  if (!chave) throw new Error('Salvar testes exige usuário autenticado.')
+  const usuario = usuarioDaSessao()
+  localStorage.setItem(chave, JSON.stringify(carimbarDono(testes, usuario)))
 }
 
 function ordenarPorData(testes) {
@@ -128,12 +141,15 @@ function ressincronizarPonto(pontoId) {
 // ---------- Mutações ----------
 
 export function criarTeste(dados, opcoes = {}) {
+  const usuario = usuarioDaSessao()
+  if (!usuario) throw new Error('Criar teste exige usuário autenticado.')
   const salas = carregarSalas()
   const { sala, ponto } = localizarPonto(salas, dados.pontoId)
   const resultado = dados.resultado === 'FAIL' ? 'FAIL' : 'PASS'
   const teste = {
     id: criarIdItem('teste'),
     pontoId: dados.pontoId,
+    usuario, // dono gravado automaticamente, nunca pelo formulário
     dataHora: dados.dataHora || agoraISO(),
     tecnico: texto(dados.tecnico),
     norma: dados.norma || NORMAS[0],

@@ -1,9 +1,17 @@
-// Camada de dados das salas — persistência em localStorage.
+// Camada de dados das salas — persistência em localStorage, ISOLADA POR
+// USUÁRIO: cada usuário só lê/grava na própria chave (nexredes_salas:<user>),
+// derivada sempre da sessão válida. O dono também é carimbado em cada sala
+// e validado na leitura (segunda camada, como user_id + RLS).
+// Entidades filhas (racks, equipamentos, portas, pontos, falhas) herdam o
+// dono da sala — nunca são consultadas fora dela.
 // Ponto único de acesso para trocar por um backend depois.
 
 import { ICONES_SALA, CORES_SALA } from '../components/sala/opcoes'
+import { usuarioDaSessao, chaveDeUsuario, carimbarDono } from './sessao'
+import { migrarChaveLegada } from './migracao'
 
-const STORAGE_KEY = 'nexredes_salas'
+const CHAVE_BASE = 'nexredes_salas'
+const CHAVE_LEGADA = 'nexredes_salas' // dados de antes do isolamento por usuário
 
 function criarId() {
   return `sala-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`
@@ -33,18 +41,29 @@ function normalizarItens(dados) {
 }
 
 // Primitivas de persistência — também usadas pela camada de racks (utils/racks.js)
+// e pelas camadas de pontos e testes. Sem sessão: leitura devolve vazio,
+// gravação é bloqueada (equivalente a 401).
 export function carregarSalas() {
+  migrarChaveLegada(CHAVE_LEGADA, CHAVE_BASE)
+  const chave = chaveDeUsuario(CHAVE_BASE)
+  if (!chave) return []
   try {
-    const bruto = localStorage.getItem(STORAGE_KEY)
+    const bruto = localStorage.getItem(chave)
     const salas = bruto ? JSON.parse(bruto) : []
-    return Array.isArray(salas) ? salas : []
+    if (!Array.isArray(salas)) return []
+    // Segunda camada: só salas carimbadas com o dono da sessão atual
+    const usuario = usuarioDaSessao()
+    return salas.filter((sala) => sala.usuario === usuario)
   } catch {
     return []
   }
 }
 
 export function salvarSalas(salas) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(salas))
+  const chave = chaveDeUsuario(CHAVE_BASE)
+  if (!chave) throw new Error('Salvar salas exige usuário autenticado.')
+  const usuario = usuarioDaSessao()
+  localStorage.setItem(chave, JSON.stringify(carimbarDono(salas, usuario)))
 }
 
 export function listarSalas() {
@@ -52,10 +71,13 @@ export function listarSalas() {
 }
 
 export function criarSala(dados) {
+  const usuario = usuarioDaSessao()
+  if (!usuario) throw new Error('Criar sala exige usuário autenticado.')
   const agora = new Date().toISOString()
   const nova = {
     ...normalizarItens(dados),
     id: criarId(),
+    usuario, // dono gravado automaticamente, nunca pelo formulário
     racks: [],
     pontos: [],
     criadoEm: agora,

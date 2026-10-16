@@ -1,10 +1,17 @@
 // Camada de dados do gerador de etiquetas: modelos de etiqueta
 // (tamanhos pré-definidos, editáveis em Configurações) e a configuração
 // geral (prefixo padrão de nomenclatura).
-// Trocar por backend = trocar só essa camada.
+// ISOLADA POR USUÁRIO: chaves derivadas sempre da sessão válida
+// (nexredes_modelos_etiqueta:<user> e nexredes_config:<user>) + carimbo de
+// dono em cada registro. Trocar por backend = trocar só essa camada.
 
-const STORAGE_MODELOS = 'nexredes_modelos_etiqueta'
-const STORAGE_CONFIG = 'nexredes_config'
+import { usuarioDaSessao, chaveDeUsuario, carimbarDono } from './sessao'
+import { migrarChaveLegada } from './migracao'
+
+const CHAVE_MODELOS_BASE = 'nexredes_modelos_etiqueta'
+const CHAVE_MODELOS_LEGADA = 'nexredes_modelos_etiqueta' // antes do isolamento
+const CHAVE_CONFIG_BASE = 'nexredes_config'
+const CHAVE_CONFIG_LEGADA = 'nexredes_config' // antes do isolamento
 
 // Modelos pré-definidos (largura/altura em milímetros)
 const MODELOS_PADRAO = [
@@ -21,24 +28,33 @@ function criarIdItem(prefixo) {
 }
 
 export function listarModelos() {
+  migrarChaveLegada(CHAVE_MODELOS_LEGADA, CHAVE_MODELOS_BASE)
+  const chave = chaveDeUsuario(CHAVE_MODELOS_BASE)
+  if (!chave) return [...MODELOS_PADRAO] // sem sessão: só leitura padrão
+  let modelos = []
   try {
-    const bruto = localStorage.getItem(STORAGE_MODELOS)
-    const modelos = bruto ? JSON.parse(bruto) : []
-    if (Array.isArray(modelos) && modelos.length > 0) return modelos
+    const bruto = localStorage.getItem(chave)
+    const lista = bruto ? JSON.parse(bruto) : []
+    modelos = Array.isArray(lista) ? lista : []
   } catch {
-    // segue para o seed abaixo
+    modelos = []
   }
-  salvarModelos([...MODELOS_PADRAO])
-  return [...MODELOS_PADRAO]
+  // Segunda camada: só modelos carimbados com o dono da sessão atual
+  const usuario = usuarioDaSessao()
+  modelos = modelos.filter((item) => item.usuario === usuario)
+  if (modelos.length > 0) return modelos
+  return salvarModelos([...MODELOS_PADRAO])
 }
 
-function salvarModelosInternal(modelos) {
-  localStorage.setItem(STORAGE_MODELOS, JSON.stringify(modelos))
-}
-
-// Grava a lista completa de modelos (usada pela tela Configurações)
+// Grava a lista completa de modelos (usada pela tela Configurações).
+// Sem sessão: bloqueada (equivalente a 401). Devolve a lista carimbada.
 export function salvarModelos(modelos) {
-  salvarModelosInternal(modelos)
+  const chave = chaveDeUsuario(CHAVE_MODELOS_BASE)
+  if (!chave) throw new Error('Salvar modelos exige usuário autenticado.')
+  const usuario = usuarioDaSessao()
+  const carimbados = carimbarDono(modelos, usuario)
+  localStorage.setItem(chave, JSON.stringify(carimbados))
+  return carimbados
 }
 
 export function salvarModelo(modelo) {
@@ -55,16 +71,16 @@ export function salvarModelo(modelo) {
       configuracao: {},
     })
   }
-  salvarModelosInternal(modelos)
+  salvarModelos(modelos)
   return modelos
 }
 
 export function excluirModelo(id) {
-  salvarModelosInternal(listarModelos().filter((item) => item.id !== id))
+  salvarModelos(listarModelos().filter((item) => item.id !== id))
 }
 
 export function restaurarModelosPadrao() {
-  salvarModelosInternal(
+  salvarModelos(
     MODELOS_PADRAO.map((modelo) => ({
       ...modelo,
       configuracao: { ...modelo.configuracao },
@@ -84,9 +100,17 @@ export function gradeDoModelo(modelo) {
 // ---------- Configuração geral ----------
 
 export function obterConfig() {
+  migrarChaveLegada(CHAVE_CONFIG_LEGADA, CHAVE_CONFIG_BASE)
+  const chave = chaveDeUsuario(CHAVE_CONFIG_BASE)
+  if (!chave) return { prefixoPadrao: 'CO-P' } // sem sessão: só padrões
   try {
-    const bruto = localStorage.getItem(STORAGE_CONFIG)
+    const bruto = localStorage.getItem(chave)
     const config = bruto ? JSON.parse(bruto) : {}
+    if (!config || typeof config !== 'object') return { prefixoPadrao: 'CO-P' }
+    // Segunda camada: config de outro dono é ignorada (fail closed)
+    if (config.usuario !== usuarioDaSessao()) {
+      return { prefixoPadrao: 'CO-P' }
+    }
     return { prefixoPadrao: 'CO-P', ...config }
   } catch {
     return { prefixoPadrao: 'CO-P' }
@@ -94,5 +118,8 @@ export function obterConfig() {
 }
 
 export function salvarConfig(config) {
-  localStorage.setItem(STORAGE_CONFIG, JSON.stringify(config))
+  const chave = chaveDeUsuario(CHAVE_CONFIG_BASE)
+  if (!chave) throw new Error('Salvar configuração exige usuário autenticado.')
+  const usuario = usuarioDaSessao()
+  localStorage.setItem(chave, JSON.stringify(carimbarDono(config, usuario)))
 }

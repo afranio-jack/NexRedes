@@ -7,6 +7,7 @@ import Logo from './components/Logo'
 import NaoEncontrada from './components/NaoEncontrada'
 import Dashboard from './components/Dashboard'
 import { rotaConhecida } from './utils/rotas'
+import { iniciarSessao, encerrarSessao } from './utils/sessao'
 
 export default function App() {
   const [rotaInexistente, setRotaInexistente] = useState(
@@ -17,6 +18,9 @@ export default function App() {
   const [notice, setNotice] = useState('')
 
   function handleLogout() {
+    // Encerra a sessão: a camada de dados volta a bloquear leituras e gravações
+    // e o próximo login só enxerga as chaves do próprio usuário
+    encerrarSessao()
     setLoggedUser(null)
     setNotice('')
     setView('login')
@@ -56,6 +60,9 @@ export default function App() {
           <Login
             notice={notice}
             onSuccess={(user) => {
+              // Sessão validada no "servidor" local: a partir daqui a camada
+              // de dados deriva SEMPRE o dono da sessão, nunca do front
+              iniciarSessao(user.username)
               setLoggedUser(user)
               setView('success')
             }}
